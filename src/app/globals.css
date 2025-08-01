@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 自定义工具类 */
+@layer utilities {
+  .content-auto {
+    content-visibility: auto;
+  }
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+  .bg-grid {
+    background-size: 40px 40px;
+    background-image: 
+        linear-gradient(to right, rgba(22, 93, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(22, 93, 255, 0.05) 1px, transparent 1px);
+  }
+  .glass {
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.7);
+  }
+  .glass-dark {
+    backdrop-filter: blur(10px);
+    background-color: rgba(29, 33, 41, 0.8);
+  }
+  .slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #165DFF;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 10px rgba(22, 93, 255, 0.7);
+  }
+  .slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 15px rgba(22, 93, 255, 0.9);
+  }
+  .slider-track {
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, #165DFF, #722ED1);
+  }
+  .slider-track-bg {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(200, 200, 200, 0.2);
+  }
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+/* 滑块样式 */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: transparent;
+  height: 6px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #165DFF;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 10px rgba(22, 93, 255, 0.7);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 15px rgba(22, 93, 255, 0.9);
+}
+
+input[type="range"]::-moz-range-track {
+  background: transparent;
+  height: 6px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #165DFF;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px rgba(22, 93, 255, 0.7);
+}
+
+/* 开关样式修复 */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #374151;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #165DFF;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0px); }
+}
+
+/* 简化版开关样式 */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  background-color: #374151;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background-color 0.4s;
+}
+
+.toggle:checked {
+  background-color: #165DFF;
+}
+
+.toggle::before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.4s;
+}
+
+.toggle:checked::before {
+  transform: translateX(20px);
+}
