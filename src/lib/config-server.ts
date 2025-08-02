@@ -87,7 +87,6 @@ export class ConfigManager {
     
     if (legacy.anthropic_auth_token) {
       envConfig.ANTHROPIC_AUTH_TOKEN = legacy.anthropic_auth_token;
-      envConfig.ANTHROPIC_API_KEY = legacy.anthropic_auth_token;
     }
     
     if (legacy.anthropic_base_url) {

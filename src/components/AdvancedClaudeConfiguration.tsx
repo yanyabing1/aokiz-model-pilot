@@ -162,7 +162,6 @@ export default function AdvancedClaudeConfiguration() {
           ANTHROPIC_MODEL: config.model || 'claude-3-5-sonnet-20241022',
           ANTHROPIC_BASE_URL: config.anthropic_base_url || 'https://api.anthropic.com',
           ANTHROPIC_AUTH_TOKEN: config.anthropic_auth_token || '',
-          ANTHROPIC_API_KEY: config.anthropic_auth_token || '',
           BASH_DEFAULT_TIMEOUT_MS: String(config.timeout || 30000),
           CLAUDE_CODE_MAX_OUTPUT_TOKENS: String(config.max_tokens || 1000000),
         },

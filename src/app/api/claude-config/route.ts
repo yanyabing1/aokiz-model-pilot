@@ -158,7 +158,6 @@ export async function POST(request: NextRequest) {
           ANTHROPIC_MODEL: config.model || 'claude-3-5-sonnet-20241022',
           ANTHROPIC_BASE_URL: config.api_endpoint || config.anthropic_base_url || 'https://api.anthropic.com',
           ANTHROPIC_AUTH_TOKEN: config.anthropic_auth_token,
-          ANTHROPIC_API_KEY: config.anthropic_auth_token,
           BASH_DEFAULT_TIMEOUT_MS: config.timeout ? String(config.timeout) : '60000',
           CLAUDE_CODE_MAX_OUTPUT_TOKENS: config.max_tokens ? String(config.max_tokens) : '1000000',
         },

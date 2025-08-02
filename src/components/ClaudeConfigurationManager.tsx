@@ -41,7 +41,6 @@ export default function ClaudeConfigurationManager() {
     env: {
       ANTHROPIC_MODEL: 'glm-4.5',
       ANTHROPIC_BASE_URL: 'https://open.bigmodel.cn/api/anthropic',
-      ANTHROPIC_API_KEY: '',
       ANTHROPIC_AUTH_TOKEN: '',
       BASH_DEFAULT_TIMEOUT_MS: '60000',
       BASH_MAX_TIMEOUT_MS: '300000',
@@ -237,7 +236,6 @@ export default function ClaudeConfigurationManager() {
           ANTHROPIC_AUTH_TOKEN: config.env?.ANTHROPIC_AUTH_TOKEN || config.anthropic_auth_token || '',
           ANTHROPIC_BASE_URL: config.env?.ANTHROPIC_BASE_URL || config.anthropic_base_url || 'https://open.bigmodel.cn/api/anthropic',
           ANTHROPIC_MODEL: config.env?.ANTHROPIC_MODEL || config.model || 'claude-3-5-sonnet-20241022',
-          ANTHROPIC_API_KEY: config.env?.ANTHROPIC_API_KEY || config.anthropic_auth_token || '',
           BASH_DEFAULT_TIMEOUT_MS: config.env?.BASH_DEFAULT_TIMEOUT_MS || String(config.timeout || 30000),
           CLAUDE_CODE_MAX_OUTPUT_TOKENS: config.env?.CLAUDE_CODE_MAX_OUTPUT_TOKENS || String(config.max_tokens || 1000000),
         },
@@ -1306,16 +1304,6 @@ Model: ${config.model}`
               <div className="bg-dark/30 rounded-lg p-4">
                 <h4 className="text-lg font-semibold text-white mb-4">认证相关</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_API_KEY</label>
-                    <p className="text-xs text-gray-400 mb-2">Anthropic API 密钥，用于访问 Claude 模型</p>
-                    <input
-                      type="password"
-                      value={config.env?.ANTHROPIC_API_KEY || ''}
-                      onChange={(e) => handleConfigChange('env.ANTHROPIC_API_KEY', e.target.value)}
-                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
-                    />
-                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_BASE_URL</label>
                     <p className="text-xs text-gray-400 mb-2">Anthropic API 基础 URL，可用于自定义 API 端点</p>

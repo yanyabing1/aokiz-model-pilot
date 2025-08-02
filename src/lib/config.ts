@@ -5,7 +5,6 @@ export interface ClaudeCodeSettings {
   // Environment variables
   env?: {
     // Authentication
-    ANTHROPIC_API_KEY?: string;
     ANTHROPIC_BASE_URL?: string;
     ANTHROPIC_AUTH_TOKEN?: string;
     ANTHROPIC_CUSTOM_HEADERS?: string;
@@ -181,7 +180,6 @@ export interface ClaudeConfig {
   
   // Environment variables
   env?: {
-    ANTHROPIC_API_KEY?: string;
     ANTHROPIC_BASE_URL?: string;
     ANTHROPIC_AUTH_TOKEN?: string;
     ANTHROPIC_CUSTOM_HEADERS?: string;
