@@ -80,10 +80,10 @@ export default function ClaudeConfigurationManager() {
 
     // Hooks
     hooks: {
-      PreToolUse: {},
-      PostToolUse: {},
-      Notification: '',
-      Stop: '',
+      PreToolUse: [],
+      PostToolUse: [],
+      Notification: [],
+      Stop: [],
     },
 
     // MCP Servers
@@ -284,10 +284,10 @@ export default function ClaudeConfigurationManager() {
           disableBypassPermissionsMode: 'disable',
         },
         hooks: config.hooks || {
-          PreToolUse: {},
-          PostToolUse: {},
-          Notification: '',
-          Stop: '',
+          PreToolUse: [],
+          PostToolUse: [],
+          Notification: [],
+          Stop: [],
         },
 
         // API Configuration

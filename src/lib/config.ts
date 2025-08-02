@@ -71,10 +71,22 @@ export interface ClaudeCodeSettings {
   
   // Hooks
   hooks?: {
-    PreToolUse?: Record<string, string>;
-    PostToolUse?: Record<string, string>;
-    Notification?: string;
-    Stop?: string;
+    PreToolUse?: Array<{
+      matcher: { tools: string[] };
+      hooks: Array<{ type: string; command: string }>;
+    }>;
+    PostToolUse?: Array<{
+      matcher: { tools: string[] };
+      hooks: Array<{ type: string; command: string }>;
+    }>;
+    Notification?: Array<{
+      matcher?: { tools?: string[] };
+      hooks: Array<{ type: string; command: string }>;
+    }>;
+    Stop?: Array<{
+      matcher?: { tools?: string[] };
+      hooks: Array<{ type: string; command: string }>;
+    }>;
   };
   
   // Model settings
@@ -219,10 +231,22 @@ export interface ClaudeConfig {
   
   // Hooks
   hooks?: {
-    PreToolUse?: Record<string, string>;
-    PostToolUse?: Record<string, string>;
-    Notification?: string;
-    Stop?: string;
+    PreToolUse?: Array<{
+      matcher: { tools: string[] };
+      hooks: Array<{ type: string; command: string }>;
+    }>;
+    PostToolUse?: Array<{
+      matcher: { tools: string[] };
+      hooks: Array<{ type: string; command: string }>;
+    }>;
+    Notification?: Array<{
+      matcher?: { tools?: string[] };
+      hooks: Array<{ type: string; command: string }>;
+    }>;
+    Stop?: Array<{
+      matcher?: { tools?: string[] };
+      hooks: Array<{ type: string; command: string }>;
+    }>;
   };
   
   // MCP servers
