@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface Configuration {
   model: string;
@@ -337,7 +337,7 @@ export default function ConfigurationManager() {
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Theme</label>
                 <div className="grid grid-cols-3 gap-3">
-                  {themeOptions.map((theme, index) => (
+                  {themeOptions.map((theme) => (
                     <div 
                       key={theme.value}
                       className={`theme-option rounded-lg p-3 ${theme.value === 'light' ? 'bg-gray-100 border border-gray-300' : 'bg-dark border border-gray-700'} cursor-pointer hover:border-primary transition-all relative ${config.theme === theme.value ? 'border-primary' : ''}`}

@@ -1,15 +1,10 @@
 'use client'
 
-import { ClaudeConfig } from '@/lib/config'
+import { ClaudeCodeSettings, ClaudeConfig } from '@/lib/config'
 import { message, Modal, notification, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
-import AdvancedFeatures from './AdvancedFeatures'
 import ClaudeConfigurationFooter from './ClaudeConfigurationFooter'
 import ClaudeConfigurationHeader from './ClaudeConfigurationHeader'
-import LanguageSettings from './LanguageSettings'
-import PrivacySettings from './PrivacySettings'
-import UISettings from './UISettings'
-import WorkspaceSettings from './WorkspaceSettings'
 
 interface LegacyClaudeConfig {
   model: string
@@ -17,21 +12,6 @@ interface LegacyClaudeConfig {
   temperature: number
   top_p: number
   system_prompt: string
-}
-
-interface ClaudeCodeSettings {
-  $schema?: string
-  env?: {
-    ANTHROPIC_AUTH_TOKEN?: string
-    ANTHROPIC_BASE_URL?: string
-    ANTHROPIC_MODEL?: string
-  }
-  feedbackSurveyState?: any
-  // 解构后的 claude_settings 字段，因为 Claude 不支持嵌套的 claude_settings
-  max_tokens?: number
-  temperature?: number
-  top_p?: number
-  system_prompt?: string
 }
 
 export default function ClaudeConfigurationManager() {
@@ -56,6 +36,58 @@ export default function ClaudeConfigurationManager() {
       requests_per_minute: 60,
       tokens_per_minute: 90000,
     },
+
+    // Environment Variables
+    env: {
+      ANTHROPIC_MODEL: 'glm-4.5',
+      ANTHROPIC_BASE_URL: 'https://open.bigmodel.cn/api/anthropic',
+      ANTHROPIC_API_KEY: '',
+      ANTHROPIC_AUTH_TOKEN: '',
+      BASH_DEFAULT_TIMEOUT_MS: '60000',
+      BASH_MAX_TIMEOUT_MS: '300000',
+      CLAUDE_CODE_MAX_OUTPUT_TOKENS: '4096',
+      MAX_THINKING_TOKENS: '1000',
+      MCP_TIMEOUT: '30000',
+      MCP_TOOL_TIMEOUT: '60000',
+      DISABLE_TELEMETRY: '0',
+      DISABLE_AUTOUPDATER: '0',
+      DISABLE_ERROR_REPORTING: '0',
+      DISABLE_COST_WARNINGS: '0',
+    },
+
+    // Permissions
+    permissions: {
+      allow: [
+        'Bash(git:*)',
+        'Bash(npm:*)',
+        'Bash(node:*)',
+        'Read(src/**)',
+        'Edit(src/**)',
+        'Write(src/**)',
+        'Glob',
+        'Grep',
+        'LS',
+        'Task',
+        'TodoWrite',
+      ],
+      deny: [],
+      additionalDirectories: [],
+      defaultMode: 'acceptEdits',
+      disableBypassPermissionsMode: 'disable',
+    },
+
+    // Hooks
+    hooks: {
+      PreToolUse: {},
+      PostToolUse: {},
+      Notification: '',
+      Stop: '',
+    },
+
+    // MCP Servers
+    enableAllProjectMcpServers: false,
+    enabledMcpjsonServers: ['memory', 'github'],
+    disabledMcpjsonServers: [],
 
     // Editor Settings
     editor_settings: {
@@ -158,10 +190,10 @@ export default function ClaudeConfigurationManager() {
 
         // 创建Legacy格式用于显示 - 从解构后的字段读取
         const legacyConfig: LegacyClaudeConfig = {
-          model: claudeCodeSettings.env?.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
-          max_tokens: claudeCodeSettings.max_tokens || 40960,
+          model: claudeCodeSettings.env?.ANTHROPIC_MODEL || claudeCodeSettings.model || 'claude-3-5-sonnet-20241022',
+          max_tokens: claudeCodeSettings.max_tokens || 4096,
           temperature: claudeCodeSettings.temperature || 0.7,
-          top_p: claudeCodeSettings.top_p || 0.9,
+          top_p: claudeCodeSettings.top_p || 1,
           system_prompt: claudeCodeSettings.system_prompt || '',
         }
 
@@ -172,10 +204,11 @@ export default function ClaudeConfigurationManager() {
           temperature: legacyConfig.temperature,
           max_tokens: legacyConfig.max_tokens,
           top_p: legacyConfig.top_p,
-          system_prompt: legacyConfig.system_prompt || prev.system_prompt,
+          system_prompt: legacyConfig.system_prompt || prev.system_prompt || '',
           anthropic_base_url:
             claudeCodeSettings.env?.ANTHROPIC_BASE_URL || 'https://open.bigmodel.cn/api/anthropic',
           anthropic_auth_token: claudeCodeSettings.env?.ANTHROPIC_AUTH_TOKEN || '',
+          theme: claudeCodeSettings.ui_settings?.theme || 'dark',
         }))
         setConfigStatus('loaded')
       } else {
@@ -192,20 +225,81 @@ export default function ClaudeConfigurationManager() {
 
   const saveClaudeConfig = async () => {
     try {
-      // 构造Claude Code格式的配置 - 将 claude_settings 解构到顶层
+      // 构造Claude Code格式的配置 - 官方格式
       const claudeCodeSettings: ClaudeCodeSettings = {
         $schema: 'https://json.schemastore.org/claude-code-settings.json',
         env: {
-          ANTHROPIC_AUTH_TOKEN: config.anthropic_auth_token || '',
-          ANTHROPIC_BASE_URL: config.anthropic_base_url || 'https://open.bigmodel.cn/api/anthropic',
-          ANTHROPIC_MODEL: config.model || 'claude-3-5-sonnet-20241022',
+          // 使用config.env中的环境变量，如果没有则使用默认值
+          ...config.env,
+          // 确保关键环境变量存在
+          ANTHROPIC_AUTH_TOKEN: config.env?.ANTHROPIC_AUTH_TOKEN || config.anthropic_auth_token || '',
+          ANTHROPIC_BASE_URL: config.env?.ANTHROPIC_BASE_URL || config.anthropic_base_url || 'https://open.bigmodel.cn/api/anthropic',
+          ANTHROPIC_MODEL: config.env?.ANTHROPIC_MODEL || config.model || 'claude-3-5-sonnet-20241022',
+          ANTHROPIC_API_KEY: config.env?.ANTHROPIC_API_KEY || config.anthropic_auth_token || '',
+          BASH_DEFAULT_TIMEOUT_MS: config.env?.BASH_DEFAULT_TIMEOUT_MS || String(config.timeout || 30000),
+          CLAUDE_CODE_MAX_OUTPUT_TOKENS: config.env?.CLAUDE_CODE_MAX_OUTPUT_TOKENS || String(config.max_tokens || 4096),
         },
-        // 解构 claude_settings 到顶层，因为 Claude 不支持嵌套的 claude_settings 字段
-        max_tokens: config.max_tokens || 40960,
+        model: config.model || 'claude-3-5-sonnet-20241022',
+        // 保留顶层的兼容性字段
+        max_tokens: config.max_tokens || 4096,
         temperature: config.temperature || 0.7,
-        top_p: config.top_p || 0.9,
+        top_p: config.top_p || 1,
         system_prompt: config.system_prompt || 'You are Claude, an AI assistant created by Anthropic.',
+        ui_settings: {
+          theme: config.ui_settings?.theme || config.theme || 'dark',
+          preferredNotifChannel: config.ui_settings?.preferredNotifChannel || 'iterm2',
+          autoUpdates: config.ui_settings?.autoUpdates !== false,
+          verbose: config.ui_settings?.verbose || false,
+          interface_density: config.ui_settings?.interface_density || 'comfortable',
+          accent_color: config.ui_settings?.accent_color || '#165DFF',
+          font_size: config.ui_settings?.font_size || 14,
+          show_line_numbers: config.ui_settings?.show_line_numbers || false,
+          show_minimap: config.ui_settings?.show_minimap || false,
+          word_wrap: config.ui_settings?.word_wrap || false,
+          notifications: config.ui_settings?.notifications || {
+            enabled: true,
+            sound: true,
+            desktop: false,
+          },
+        },
+        permissions: config.permissions || {
+          allow: [
+            'Bash(git:*)',
+            'Bash(npm:*)',
+            'Bash(node:*)',
+            'Read(src/**)',
+            'Edit(src/**)',
+            'Write(src/**)',
+            'Glob',
+            'Grep',
+            'LS',
+            'Task',
+            'TodoWrite',
+          ],
+          deny: [],
+          additionalDirectories: [],
+          defaultMode: 'acceptEdits',
+          disableBypassPermissionsMode: 'disable',
+        },
+        hooks: config.hooks || {
+          PreToolUse: {},
+          PostToolUse: {},
+          Notification: '',
+          Stop: '',
+        },
+        enableAllProjectMcpServers: config.enableAllProjectMcpServers || false,
+        enabledMcpjsonServers: config.enabledMcpjsonServers || ['memory', 'github'],
+        disabledMcpjsonServers: config.disabledMcpjsonServers || [],
+        cleanupPeriodDays: config.cleanupPeriodDays || 30,
+        includeCoAuthoredBy: config.includeCoAuthoredBy !== false,
       }
+
+      // Clean up undefined values
+      Object.keys(claudeCodeSettings.env || {}).forEach((key: string) => {
+        if (claudeCodeSettings.env && (claudeCodeSettings.env[key as keyof typeof claudeCodeSettings.env] === undefined || claudeCodeSettings.env[key as keyof typeof claudeCodeSettings.env] === null || claudeCodeSettings.env[key as keyof typeof claudeCodeSettings.env] === '')) {
+          delete claudeCodeSettings.env[key as keyof typeof claudeCodeSettings.env];
+        }
+      });
 
       console.log('Saving Claude Code settings:', claudeCodeSettings)
       console.log('Current config state:', config)
@@ -298,27 +392,30 @@ export default function ClaudeConfigurationManager() {
       let current: any = newConfig
 
       for (let i = 0; i < keys.length - 1; i++) {
-        if (!current[keys[i]]) {
-          current[keys[i]] = {}
+        const key = keys[i];
+        if (!key) continue;
+        if (!current[key]) {
+          current[key] = {}
         }
-        current = current[keys[i]]
+        current = current[key]
       }
 
-      current[keys[keys.length - 1]] = value
+      const lastKey = keys[keys.length - 1];
+      if (lastKey) {
+        current[lastKey] = value;
+      }
       return newConfig
     })
   }
 
-  const accentColors = ['#165DFF', '#0FC6C2', '#722ED1', '#22C55E', '#EAB308', '#EF4444', '#6B7280']
 
   const tabs = [
     { id: 'basic', label: '基础设置', icon: 'fas fa-cog' },
+    { id: 'permissions', label: '权限配置', icon: 'fas fa-shield-alt' },
+    { id: 'environment', label: '环境变量', icon: 'fas fa-terminal' },
+    { id: 'hooks', label: '钩子配置', icon: 'fas fa-link' },
     { id: 'api', label: 'API设置', icon: 'fas fa-plug' },
-    { id: 'editor', label: '编辑器', icon: 'fas fa-code' },
-    { id: 'workspace', label: '工作空间', icon: 'fas fa-folder' },
-    { id: 'languages', label: '语言设置', icon: 'fas fa-language' },
-    { id: 'privacy', label: '隐私安全', icon: 'fas fa-shield-alt' },
-    { id: 'advanced', label: '高级功能', icon: 'fas fa-rocket' },
+    { id: 'mcp', label: 'MCP服务器', icon: 'fas fa-server' },
     { id: 'ui', label: '界面设置', icon: 'fas fa-palette' },
   ]
 
@@ -618,27 +715,23 @@ export default function ClaudeConfigurationManager() {
                       onChange={e => handleConfigChange('model', e.target.value)}
                     >
                       <optgroup label="Claude 4 系列">
-                        <option value="claude-opus-4-20250514">
-                          Claude Opus 4 - 最强大模型，混合推理
-                        </option>
-                        <option value="claude-sonnet-4-20250514">
-                          Claude Sonnet 4 - 平衡性能与成本
+                        <option value="claude-4-20250514">
+                          Claude 4 - 最新模型
                         </option>
                       </optgroup>
                       <optgroup label="Claude 3.x 系列">
                         <option value="claude-3-7-sonnet-20250219">
-                          Claude Sonnet 3.7 - 扩展思考，128K输出
+                          Claude 3.7 Sonnet - 扩展思考，128K输出
                         </option>
                         <option value="claude-3-5-sonnet-20241022">
-                          Claude Sonnet 3.5 (新) - 支持计算机使用
+                          Claude 3.5 Sonnet - 支持计算机使用 (推荐)
                         </option>
-                        <option value="claude-3-5-sonnet-20240620">
-                          Claude Sonnet 3.5 (原) - 原始版本
-                        </option>
-                        <option value="claude-3-5-haiku-20241022">
-                          Claude Haiku 3.5 - 高速高智能，实时应用
-                        </option>
-                        <option value="claude-3-haiku-20240307">Claude Haiku 3 - 最经济选择</option>
+                        <option value="claude-3-haiku-20240307">Claude 3 Haiku - 最经济选择</option>
+                      </optgroup>
+                      <optgroup label="Claude 2.x 系列">
+                        <option value="claude-2.1">Claude 2.1</option>
+                        <option value="claude-2">Claude 2</option>
+                        <option value="claude-instant-1.2">Claude Instant 1.2</option>
                       </optgroup>
                       <optgroup label="其他模型">
                         <option value="glm-4.5">GLM-4.5</option>
@@ -765,6 +858,643 @@ export default function ClaudeConfigurationManager() {
                 <i className="fas fa-arrow-right ml-2"></i>
               </button>
             </div> */}
+          </div>
+        )}
+
+        {/* Permissions Settings */}
+        {activeTab === 'permissions' && (
+          <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
+            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+              <i className="fas fa-shield-alt text-primary mr-3"></i>
+              权限配置
+            </h3>
+            <div className="space-y-6">
+              {/* Default Mode */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">默认权限模式</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">默认模式</label>
+                    <select
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                      value={config.permissions?.defaultMode || 'acceptEdits'}
+                      onChange={(e) => handleConfigChange('permissions.defaultMode', e.target.value)}
+                    >
+                      <option value="acceptEdits">接受编辑</option>
+                      <option value="prompt">提示确认</option>
+                      <option value="deny">拒绝操作</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">绕过权限模式</label>
+                    <select
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                      value={config.permissions?.disableBypassPermissionsMode || 'disable'}
+                      onChange={(e) => handleConfigChange('permissions.disableBypassPermissionsMode', e.target.value)}
+                    >
+                      <option value="disable">禁用</option>
+                      <option value="enable">启用</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Allow Rules */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">允许规则</h4>
+                <div className="space-y-3">
+                  {config.permissions?.allow?.map((rule, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={rule}
+                        onChange={(e) => {
+                          const newAllow = [...(config.permissions?.allow || [])];
+                          newAllow[index] = e.target.value;
+                          handleConfigChange('permissions.allow', newAllow);
+                        }}
+                        className="flex-1 bg-dark/50 border border-primary/40 rounded-lg py-2 px-4 text-light"
+                      />
+                      <button
+                        onClick={() => {
+                          const newAllow = [...(config.permissions?.allow || [])];
+                          newAllow.splice(index, 1);
+                          handleConfigChange('permissions.allow', newAllow);
+                        }}
+                        className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => {
+                      const newAllow = [...(config.permissions?.allow || []), ''];
+                      handleConfigChange('permissions.allow', newAllow);
+                    }}
+                    className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 flex items-center"
+                  >
+                    <i className="fas fa-plus mr-2"></i>
+                    添加规则
+                  </button>
+                </div>
+              </div>
+
+              {/* Deny Rules */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">拒绝规则</h4>
+                <div className="space-y-3">
+                  {config.permissions?.deny?.map((rule, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={rule}
+                        onChange={(e) => {
+                          const newDeny = [...(config.permissions?.deny || [])];
+                          newDeny[index] = e.target.value;
+                          handleConfigChange('permissions.deny', newDeny);
+                        }}
+                        className="flex-1 bg-dark/50 border border-primary/40 rounded-lg py-2 px-4 text-light"
+                      />
+                      <button
+                        onClick={() => {
+                          const newDeny = [...(config.permissions?.deny || [])];
+                          newDeny.splice(index, 1);
+                          handleConfigChange('permissions.deny', newDeny);
+                        }}
+                        className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => {
+                      const newDeny = [...(config.permissions?.deny || []), ''];
+                      handleConfigChange('permissions.deny', newDeny);
+                    }}
+                    className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 flex items-center"
+                  >
+                    <i className="fas fa-plus mr-2"></i>
+                    添加规则
+                  </button>
+                </div>
+              </div>
+
+              {/* Additional Directories */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">额外工作目录</h4>
+                <div className="space-y-3">
+                  {config.permissions?.additionalDirectories?.map((dir, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={dir}
+                        onChange={(e) => {
+                          const newDirs = [...(config.permissions?.additionalDirectories || [])];
+                          newDirs[index] = e.target.value;
+                          handleConfigChange('permissions.additionalDirectories', newDirs);
+                        }}
+                        className="flex-1 bg-dark/50 border border-primary/40 rounded-lg py-2 px-4 text-light"
+                      />
+                      <button
+                        onClick={() => {
+                          const newDirs = [...(config.permissions?.additionalDirectories || [])];
+                          newDirs.splice(index, 1);
+                          handleConfigChange('permissions.additionalDirectories', newDirs);
+                        }}
+                        className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => {
+                      const newDirs = [...(config.permissions?.additionalDirectories || []), ''];
+                      handleConfigChange('permissions.additionalDirectories', newDirs);
+                    }}
+                    className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 flex items-center"
+                  >
+                    <i className="fas fa-plus mr-2"></i>
+                    添加目录
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Environment Variables Settings */}
+        {activeTab === 'environment' && (
+          <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
+            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+              <i className="fas fa-terminal text-primary mr-3"></i>
+              环境变量配置
+            </h3>
+            <div className="space-y-6">
+              {/* Authentication Variables */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">认证相关</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_API_KEY</label>
+                    <input
+                      type="password"
+                      value={config.env?.ANTHROPIC_API_KEY || ''}
+                      onChange={(e) => handleConfigChange('env.ANTHROPIC_API_KEY', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_BASE_URL</label>
+                    <input
+                      type="text"
+                      value={config.env?.ANTHROPIC_BASE_URL || ''}
+                      onChange={(e) => handleConfigChange('env.ANTHROPIC_BASE_URL', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_AUTH_TOKEN</label>
+                    <input
+                      type="password"
+                      value={config.env?.ANTHROPIC_AUTH_TOKEN || ''}
+                      onChange={(e) => handleConfigChange('env.ANTHROPIC_AUTH_TOKEN', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">AWS_BEARER_TOKEN_BEDROCK</label>
+                    <input
+                      type="password"
+                      value={config.env?.AWS_BEARER_TOKEN_BEDROCK || ''}
+                      onChange={(e) => handleConfigChange('env.AWS_BEARER_TOKEN_BEDROCK', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Model Configuration */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">模型配置</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_MODEL</label>
+                    <input
+                      type="text"
+                      value={config.env?.ANTHROPIC_MODEL || ''}
+                      onChange={(e) => handleConfigChange('env.ANTHROPIC_MODEL', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_SMALL_FAST_MODEL</label>
+                    <input
+                      type="text"
+                      value={config.env?.ANTHROPIC_SMALL_FAST_MODEL || ''}
+                      onChange={(e) => handleConfigChange('env.ANTHROPIC_SMALL_FAST_MODEL', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bash Configuration */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">Bash配置</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">BASH_DEFAULT_TIMEOUT_MS</label>
+                    <input
+                      type="number"
+                      value={config.env?.BASH_DEFAULT_TIMEOUT_MS || ''}
+                      onChange={(e) => handleConfigChange('env.BASH_DEFAULT_TIMEOUT_MS', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">BASH_MAX_TIMEOUT_MS</label>
+                    <input
+                      type="number"
+                      value={config.env?.BASH_MAX_TIMEOUT_MS || ''}
+                      onChange={(e) => handleConfigChange('env.BASH_MAX_TIMEOUT_MS', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">BASH_MAX_OUTPUT_LENGTH</label>
+                    <input
+                      type="number"
+                      value={config.env?.BASH_MAX_OUTPUT_LENGTH || ''}
+                      onChange={(e) => handleConfigChange('env.BASH_MAX_OUTPUT_LENGTH', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Output Limits */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">输出限制</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">CLAUDE_CODE_MAX_OUTPUT_TOKENS</label>
+                    <input
+                      type="number"
+                      value={config.env?.CLAUDE_CODE_MAX_OUTPUT_TOKENS || ''}
+                      onChange={(e) => handleConfigChange('env.CLAUDE_CODE_MAX_OUTPUT_TOKENS', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">MAX_THINKING_TOKENS</label>
+                    <input
+                      type="number"
+                      value={config.env?.MAX_THINKING_TOKENS || ''}
+                      onChange={(e) => handleConfigChange('env.MAX_THINKING_TOKENS', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* MCP Configuration */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">MCP配置</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">MCP_TIMEOUT</label>
+                    <input
+                      type="number"
+                      value={config.env?.MCP_TIMEOUT || ''}
+                      onChange={(e) => handleConfigChange('env.MCP_TIMEOUT', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">MCP_TOOL_TIMEOUT</label>
+                    <input
+                      type="number"
+                      value={config.env?.MCP_TOOL_TIMEOUT || ''}
+                      onChange={(e) => handleConfigChange('env.MCP_TOOL_TIMEOUT', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Disable Options */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">禁用选项</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">DISABLE_TELEMETRY</label>
+                    <input
+                      type="checkbox"
+                      checked={config.env?.DISABLE_TELEMETRY === '1' || config.env?.DISABLE_TELEMETRY === 'true'}
+                      onChange={(e) => handleConfigChange('env.DISABLE_TELEMETRY', e.target.checked ? '1' : '0')}
+                      className="toggle"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">DISABLE_AUTOUPDATER</label>
+                    <input
+                      type="checkbox"
+                      checked={config.env?.DISABLE_AUTOUPDATER === '1' || config.env?.DISABLE_AUTOUPDATER === 'true'}
+                      onChange={(e) => handleConfigChange('env.DISABLE_AUTOUPDATER', e.target.checked ? '1' : '0')}
+                      className="toggle"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">DISABLE_ERROR_REPORTING</label>
+                    <input
+                      type="checkbox"
+                      checked={config.env?.DISABLE_ERROR_REPORTING === '1' || config.env?.DISABLE_ERROR_REPORTING === 'true'}
+                      onChange={(e) => handleConfigChange('env.DISABLE_ERROR_REPORTING', e.target.checked ? '1' : '0')}
+                      className="toggle"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">DISABLE_COST_WARNINGS</label>
+                    <input
+                      type="checkbox"
+                      checked={config.env?.DISABLE_COST_WARNINGS === '1' || config.env?.DISABLE_COST_WARNINGS === 'true'}
+                      onChange={(e) => handleConfigChange('env.DISABLE_COST_WARNINGS', e.target.checked ? '1' : '0')}
+                      className="toggle"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hooks Settings */}
+        {activeTab === 'hooks' && (
+          <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
+            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+              <i className="fas fa-link text-primary mr-3"></i>
+              钩子配置
+            </h3>
+            <div className="space-y-6">
+              {/* PreToolUse Hooks */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">工具执行前钩子</h4>
+                <div className="space-y-3">
+                  {Object.entries(config.hooks?.PreToolUse || {}).map(([tool, command], index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <select
+                        value={tool}
+                        onChange={(e) => {
+                          const newHooks = { ...(config.hooks?.PreToolUse || {}) };
+                          delete newHooks[tool];
+                          newHooks[e.target.value] = command;
+                          handleConfigChange('hooks.PreToolUse', newHooks);
+                        }}
+                        className="bg-dark/50 border border-primary/40 rounded-lg py-2 px-4 text-light"
+                      >
+                        <option value="Bash">Bash</option>
+                        <option value="Edit">Edit</option>
+                        <option value="Read">Read</option>
+                        <option value="Write">Write</option>
+                        <option value="WebFetch">WebFetch</option>
+                        <option value="WebSearch">WebSearch</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={command}
+                        onChange={(e) => {
+                          const newHooks = { ...(config.hooks?.PreToolUse || {}) };
+                          newHooks[tool] = e.target.value;
+                          handleConfigChange('hooks.PreToolUse', newHooks);
+                        }}
+                        className="flex-1 bg-dark/50 border border-primary/40 rounded-lg py-2 px-4 text-light"
+                        placeholder="执行的命令"
+                      />
+                      <button
+                        onClick={() => {
+                          const newHooks = { ...(config.hooks?.PreToolUse || {}) };
+                          delete newHooks[tool];
+                          handleConfigChange('hooks.PreToolUse', newHooks);
+                        }}
+                        className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => {
+                      const newHooks = { ...(config.hooks?.PreToolUse || {}) };
+                      newHooks['Bash'] = '';
+                      handleConfigChange('hooks.PreToolUse', newHooks);
+                    }}
+                    className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 flex items-center"
+                  >
+                    <i className="fas fa-plus mr-2"></i>
+                    添加钩子
+                  </button>
+                </div>
+              </div>
+
+              {/* PostToolUse Hooks */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">工具执行后钩子</h4>
+                <div className="space-y-3">
+                  {Object.entries(config.hooks?.PostToolUse || {}).map(([tool, command], index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <select
+                        value={tool}
+                        onChange={(e) => {
+                          const newHooks = { ...(config.hooks?.PostToolUse || {}) };
+                          delete newHooks[tool];
+                          newHooks[e.target.value] = command;
+                          handleConfigChange('hooks.PostToolUse', newHooks);
+                        }}
+                        className="bg-dark/50 border border-primary/40 rounded-lg py-2 px-4 text-light"
+                      >
+                        <option value="Bash">Bash</option>
+                        <option value="Edit">Edit</option>
+                        <option value="Read">Read</option>
+                        <option value="Write">Write</option>
+                        <option value="WebFetch">WebFetch</option>
+                        <option value="WebSearch">WebSearch</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={command}
+                        onChange={(e) => {
+                          const newHooks = { ...(config.hooks?.PostToolUse || {}) };
+                          newHooks[tool] = e.target.value;
+                          handleConfigChange('hooks.PostToolUse', newHooks);
+                        }}
+                        className="flex-1 bg-dark/50 border border-primary/40 rounded-lg py-2 px-4 text-light"
+                        placeholder="执行的命令"
+                      />
+                      <button
+                        onClick={() => {
+                          const newHooks = { ...(config.hooks?.PostToolUse || {}) };
+                          delete newHooks[tool];
+                          handleConfigChange('hooks.PostToolUse', newHooks);
+                        }}
+                        className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => {
+                      const newHooks = { ...(config.hooks?.PostToolUse || {}) };
+                      newHooks['Bash'] = '';
+                      handleConfigChange('hooks.PostToolUse', newHooks);
+                    }}
+                    className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 flex items-center"
+                  >
+                    <i className="fas fa-plus mr-2"></i>
+                    添加钩子
+                  </button>
+                </div>
+              </div>
+
+              {/* Other Hooks */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">其他钩子</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">通知钩子</label>
+                    <input
+                      type="text"
+                      value={config.hooks?.Notification || ''}
+                      onChange={(e) => handleConfigChange('hooks.Notification', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                      placeholder="通知时执行的命令"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">停止钩子</label>
+                    <input
+                      type="text"
+                      value={config.hooks?.Stop || ''}
+                      onChange={(e) => handleConfigChange('hooks.Stop', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                      placeholder="停止时执行的命令"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MCP Servers Settings */}
+        {activeTab === 'mcp' && (
+          <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
+            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
+              <i className="fas fa-server text-primary mr-3"></i>
+              MCP服务器配置
+            </h3>
+            <div className="space-y-6">
+              {/* MCP Server Management */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">服务器管理</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">自动批准项目MCP服务器</label>
+                    <input
+                      type="checkbox"
+                      checked={config.enableAllProjectMcpServers || false}
+                      onChange={(e) => handleConfigChange('enableAllProjectMcpServers', e.target.checked)}
+                      className="toggle"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Enabled MCP Servers */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">启用的MCP服务器</h4>
+                <div className="space-y-3">
+                  {config.enabledMcpjsonServers?.map((server, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={server}
+                        onChange={(e) => {
+                          const newServers = [...(config.enabledMcpjsonServers || [])];
+                          newServers[index] = e.target.value;
+                          handleConfigChange('enabledMcpjsonServers', newServers);
+                        }}
+                        className="flex-1 bg-dark/50 border border-primary/40 rounded-lg py-2 px-4 text-light"
+                      />
+                      <button
+                        onClick={() => {
+                          const newServers = [...(config.enabledMcpjsonServers || [])];
+                          newServers.splice(index, 1);
+                          handleConfigChange('enabledMcpjsonServers', newServers);
+                        }}
+                        className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => {
+                      const newServers = [...(config.enabledMcpjsonServers || []), ''];
+                      handleConfigChange('enabledMcpjsonServers', newServers);
+                    }}
+                    className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 flex items-center"
+                  >
+                    <i className="fas fa-plus mr-2"></i>
+                    添加服务器
+                  </button>
+                </div>
+              </div>
+
+              {/* Disabled MCP Servers */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">禁用的MCP服务器</h4>
+                <div className="space-y-3">
+                  {config.disabledMcpjsonServers?.map((server, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={server}
+                        onChange={(e) => {
+                          const newServers = [...(config.disabledMcpjsonServers || [])];
+                          newServers[index] = e.target.value;
+                          handleConfigChange('disabledMcpjsonServers', newServers);
+                        }}
+                        className="flex-1 bg-dark/50 border border-primary/40 rounded-lg py-2 px-4 text-light"
+                      />
+                      <button
+                        onClick={() => {
+                          const newServers = [...(config.disabledMcpjsonServers || [])];
+                          newServers.splice(index, 1);
+                          handleConfigChange('disabledMcpjsonServers', newServers);
+                        }}
+                        className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => {
+                      const newServers = [...(config.disabledMcpjsonServers || []), ''];
+                      handleConfigChange('disabledMcpjsonServers', newServers);
+                    }}
+                    className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 flex items-center"
+                  >
+                    <i className="fas fa-plus mr-2"></i>
+                    添加服务器
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1223,50 +1953,7 @@ Model: ${config.model}`
           </div>
         )}
 
-        {/* Workspace Settings */}
-        {activeTab === 'workspace' && (
-          <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
-            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-              <i className="fas fa-folder text-primary mr-3"></i>
-              工作空间设置
-            </h3>
-            <WorkspaceSettings config={config} onConfigChange={handleConfigChange} />
-          </div>
-        )}
-
-        {/* Language Settings */}
-        {activeTab === 'languages' && (
-          <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
-            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-              <i className="fas fa-language text-primary mr-3"></i>
-              语言设置
-            </h3>
-            <LanguageSettings config={config} onConfigChange={handleConfigChange} />
-          </div>
-        )}
-
-        {/* Privacy Settings */}
-        {activeTab === 'privacy' && (
-          <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
-            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-              <i className="fas fa-shield-alt text-primary mr-3"></i>
-              隐私与安全设置
-            </h3>
-            <PrivacySettings config={config} onConfigChange={handleConfigChange} />
-          </div>
-        )}
-
-        {/* Advanced Features */}
-        {activeTab === 'advanced' && (
-          <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
-            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-              <i className="fas fa-rocket text-primary mr-3"></i>
-              高级功能
-            </h3>
-            <AdvancedFeatures config={config} onConfigChange={handleConfigChange} />
-          </div>
-        )}
-
+  
         {/* UI Settings */}
         {activeTab === 'ui' && (
           <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
@@ -1274,7 +1961,180 @@ Model: ${config.model}`
               <i className="fas fa-palette text-primary mr-3"></i>
               界面设置
             </h3>
-            <UISettings config={config} onConfigChange={handleConfigChange} />
+            <div className="space-y-6">
+              {/* Theme Settings */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">主题设置</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">主题</label>
+                    <select
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                      value={config.ui_settings?.theme || 'dark'}
+                      onChange={(e) => handleConfigChange('ui_settings.theme', e.target.value)}
+                    >
+                      <option value="dark">深色</option>
+                      <option value="light">浅色</option>
+                      <option value="system">系统</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">通知渠道</label>
+                    <select
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                      value={config.ui_settings?.preferredNotifChannel || 'iterm2'}
+                      onChange={(e) => handleConfigChange('ui_settings.preferredNotifChannel', e.target.value)}
+                    >
+                      <option value="iterm2">iTerm2</option>
+                      <option value="iterm2_with_bell">iTerm2 with Bell</option>
+                      <option value="terminal_bell">Terminal Bell</option>
+                      <option value="notifications_disabled">禁用通知</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">自动更新</label>
+                    <input
+                      type="checkbox"
+                      checked={config.ui_settings?.autoUpdates !== false}
+                      onChange={(e) => handleConfigChange('ui_settings.autoUpdates', e.target.checked)}
+                      className="toggle"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Global Settings */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">全局设置</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">详细输出</label>
+                    <input
+                      type="checkbox"
+                      checked={config.ui_settings?.verbose || false}
+                      onChange={(e) => handleConfigChange('ui_settings.verbose', e.target.checked)}
+                      className="toggle"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">数据保留天数</label>
+                    <input
+                      type="number"
+                      value={config.cleanupPeriodDays || 30}
+                      onChange={(e) => handleConfigChange('cleanupPeriodDays', parseInt(e.target.value))}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">包含Claude署名</label>
+                    <input
+                      type="checkbox"
+                      checked={config.includeCoAuthoredBy !== false}
+                      onChange={(e) => handleConfigChange('includeCoAuthoredBy', e.target.checked)}
+                      className="toggle"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Legacy UI Settings */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">界面细节</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">界面密度</label>
+                    <select
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                      value={config.ui_settings?.interface_density || 'comfortable'}
+                      onChange={(e) => handleConfigChange('ui_settings.interface_density', e.target.value)}
+                    >
+                      <option value="comfortable">舒适</option>
+                      <option value="compact">紧凑</option>
+                      <option value="spacious">宽松</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">强调色</label>
+                    <input
+                      type="color"
+                      value={config.ui_settings?.accent_color || '#165DFF'}
+                      onChange={(e) => handleConfigChange('ui_settings.accent_color', e.target.value)}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">字体大小</label>
+                    <input
+                      type="number"
+                      value={config.ui_settings?.font_size || 14}
+                      onChange={(e) => handleConfigChange('ui_settings.font_size', parseInt(e.target.value))}
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">显示行号</label>
+                    <input
+                      type="checkbox"
+                      checked={config.ui_settings?.show_line_numbers || false}
+                      onChange={(e) => handleConfigChange('ui_settings.show_line_numbers', e.target.checked)}
+                      className="toggle"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">显示小地图</label>
+                    <input
+                      type="checkbox"
+                      checked={config.ui_settings?.show_minimap || false}
+                      onChange={(e) => handleConfigChange('ui_settings.show_minimap', e.target.checked)}
+                      className="toggle"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">自动换行</label>
+                    <input
+                      type="checkbox"
+                      checked={config.ui_settings?.word_wrap || false}
+                      onChange={(e) => handleConfigChange('ui_settings.word_wrap', e.target.checked)}
+                      className="toggle"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Notification Settings */}
+              <div className="bg-dark/30 rounded-lg p-4">
+                <h4 className="text-lg font-semibold text-white mb-4">通知设置</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">启用通知</label>
+                    <input
+                      type="checkbox"
+                      checked={config.ui_settings?.notifications?.enabled || false}
+                      onChange={(e) => handleConfigChange('ui_settings.notifications.enabled', e.target.checked)}
+                      className="toggle"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">声音通知</label>
+                    <input
+                      type="checkbox"
+                      checked={config.ui_settings?.notifications?.sound || false}
+                      onChange={(e) => handleConfigChange('ui_settings.notifications.sound', e.target.checked)}
+                      className="toggle"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">桌面通知</label>
+                    <input
+                      type="checkbox"
+                      checked={config.ui_settings?.notifications?.desktop || false}
+                      onChange={(e) => handleConfigChange('ui_settings.notifications.desktop', e.target.checked)}
+                      className="toggle"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

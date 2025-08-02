@@ -20,7 +20,7 @@ const languages = [
 ];
 
 export default function LanguageSettings({ config, onConfigChange }: LanguageSettingsProps) {
-  const [selectedLanguage, setSelectedLanguage] = useState(languages[0].id);
+  const [selectedLanguage, setSelectedLanguage] = useState(languages[0]?.id || 'javascript');
 
   const currentLanguageSettings = config.language_settings?.[selectedLanguage] || {};
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { StatCard } from './StatCard';
+import { StatCard, StatCardProps } from './StatCard';
 import { Chart } from './Chart';
 import { useState } from 'react';
 
@@ -8,7 +8,7 @@ export default function Dashboard() {
   const [activityTimeRange, setActivityTimeRange] = useState<'week' | 'month' | 'year'>('week');
   const [siteTimeRange, setSiteTimeRange] = useState<'week' | 'month' | 'year'>('week');
 
-  const statsData = [
+  const statsData: StatCardProps[] = [
     {
       title: '活动数',
       value: '333',
@@ -39,7 +39,7 @@ export default function Dashboard() {
     }
   ];
 
-  const siteStatsData = [
+  const siteStatsData: StatCardProps[] = [
     {
       title: '站点数',
       value: '333',
@@ -153,7 +153,8 @@ export default function Dashboard() {
             <StatCard key={index} {...stat} />
           ))}
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

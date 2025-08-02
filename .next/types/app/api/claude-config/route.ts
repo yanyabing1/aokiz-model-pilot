@@ -1,4 +1,4 @@
-// File: /Users/yytok/Desktop/YYB.R&D/Aokiz/claude-controll-project/src/app/api/claude-config/route.ts
+// File: /Users/yytok/Desktop/YYB.R&D/Aokiz/aokiz-model-pilot/src/app/api/claude-config/route.ts
 import * as entry from '../../../../../src/app/api/claude-config/route.js'
 import type { NextRequest } from 'next/server.js'
 

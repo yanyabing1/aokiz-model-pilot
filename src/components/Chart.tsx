@@ -16,7 +16,7 @@ interface ChartProps {
   onTimeRangeChange: (range: 'week' | 'month' | 'year') => void;
 }
 
-export function Chart({ id, title, data, categories, timeRange, onTimeRangeChange }: ChartProps) {
+export function Chart({ title, data, categories, timeRange, onTimeRangeChange }: ChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstanceRef = useRef<any>(null);
 

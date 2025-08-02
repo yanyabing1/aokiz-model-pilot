@@ -1,6 +1,6 @@
 'use client';
 
-import { ClaudeConfig } from '@/lib/config';
+import { ClaudeCodeSettings, ClaudeConfig } from '@/lib/config';
 import { useEffect, useState } from 'react';
 import AdvancedFeatures from './AdvancedFeatures';
 import ClaudeConfigurationFooter from './ClaudeConfigurationFooter';
@@ -12,10 +12,10 @@ import WorkspaceSettings from './WorkspaceSettings';
 
 export default function AdvancedClaudeConfiguration() {
   const [config, setConfig] = useState<ClaudeConfig>({
-    model: 'Claude Instant',
+    model: 'claude-3-5-sonnet-20241022',
     temperature: 0.7,
-    max_tokens: 40960,
-    top_p: 0.9,
+    max_tokens: 4096,
+    top_p: 1,
     system_prompt: `你是一个有帮助、尊重和诚实的助手。始终尽可能有帮助地回答，同时保持安全。你的回答不应包含任何有害、不道德、种族主义、性别歧视、有毒、危险或非法的内容。请确保你的回答在社会上是无偏见的，并且是积极的。
 如果一个问题的含义不清楚或事实上不连贯，请解释为什么而不是回答不正确的内容。如果你不知道问题的答案，请不要分享虚假信息。`,
     auto_save: true,
@@ -109,6 +109,7 @@ export default function AdvancedClaudeConfiguration() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
 
   useEffect(() => {
@@ -117,10 +118,32 @@ export default function AdvancedClaudeConfiguration() {
 
   const loadConfig = async () => {
     try {
-      const response = await fetch('/api/config');
+      const response = await fetch('/api/claude-config');
       if (response.ok) {
-        const loadedConfig = await response.json();
-        setConfig(prev => ({ ...prev, ...loadedConfig }));
+        const claudeCodeSettings: ClaudeCodeSettings = await response.json();
+        
+        // Convert Claude Code settings to legacy format for UI compatibility
+        const legacyConfig: ClaudeConfig = {
+          model: claudeCodeSettings.env?.ANTHROPIC_MODEL || claudeCodeSettings.model || 'claude-3-5-sonnet-20241022',
+          temperature: claudeCodeSettings.temperature || 0.7,
+          max_tokens: claudeCodeSettings.max_tokens || 4096,
+          top_p: claudeCodeSettings.top_p || 1,
+          system_prompt: claudeCodeSettings.system_prompt || '',
+          anthropic_base_url: claudeCodeSettings.env?.ANTHROPIC_BASE_URL || 'https://api.anthropic.com',
+          anthropic_auth_token: claudeCodeSettings.env?.ANTHROPIC_AUTH_TOKEN || '',
+          theme: claudeCodeSettings.ui_settings?.theme || 'dark',
+          auto_save: true,
+          api_endpoint: 'https://api.anthropic.com',
+          streaming: true,
+          timeout: parseInt(claudeCodeSettings.env?.BASH_DEFAULT_TIMEOUT_MS || '30000'),
+          max_retries: 3,
+          rate_limit: {
+            requests_per_minute: 60,
+            tokens_per_minute: 90000,
+          },
+        };
+        
+        setConfig(prev => ({ ...prev, ...legacyConfig }));
       }
     } catch (error) {
       console.error('Failed to load config:', error);
@@ -130,13 +153,63 @@ export default function AdvancedClaudeConfiguration() {
   };
 
   const saveConfig = async () => {
+    setIsSaving(true);
     try {
-      const response = await fetch('/api/config', {
+      // Convert legacy config to Claude Code format
+      const claudeCodeSettings: ClaudeCodeSettings = {
+        $schema: 'https://json.schemastore.org/claude-code-settings.json',
+        env: {
+          ANTHROPIC_MODEL: config.model || 'claude-3-5-sonnet-20241022',
+          ANTHROPIC_BASE_URL: config.anthropic_base_url || 'https://api.anthropic.com',
+          ANTHROPIC_AUTH_TOKEN: config.anthropic_auth_token || '',
+          ANTHROPIC_API_KEY: config.anthropic_auth_token || '',
+          BASH_DEFAULT_TIMEOUT_MS: String(config.timeout || 30000),
+          CLAUDE_CODE_MAX_OUTPUT_TOKENS: String(config.max_tokens || 4096),
+        },
+        model: config.model || 'claude-3-5-sonnet-20241022',
+        max_tokens: config.max_tokens || 4096,
+        temperature: config.temperature || 0.7,
+        top_p: config.top_p || 1,
+        system_prompt: config.system_prompt || 'You are Claude, an AI assistant created by Anthropic.',
+        ui_settings: {
+          theme: config.theme || 'dark',
+          preferredNotifChannel: 'iterm2',
+          autoUpdates: true,
+          verbose: false,
+        },
+        permissions: {
+          allow: [
+            'Bash(git:*)',
+            'Bash(npm:*)',
+            'Bash(node:*)',
+            'Read(src/**)',
+            'Edit(src/**)',
+            'Write(src/**)',
+            'Glob',
+            'Grep',
+            'LS',
+            'Task',
+            'TodoWrite',
+          ],
+          deny: [],
+          additionalDirectories: [],
+          defaultMode: 'acceptEdits',
+        },
+      };
+
+      // Clean up undefined values
+      Object.keys(claudeCodeSettings.env || {}).forEach((key: string) => {
+        if (claudeCodeSettings.env && (claudeCodeSettings.env[key as keyof typeof claudeCodeSettings.env] === undefined || claudeCodeSettings.env[key as keyof typeof claudeCodeSettings.env] === null || claudeCodeSettings.env[key as keyof typeof claudeCodeSettings.env] === '')) {
+          delete claudeCodeSettings.env[key as keyof typeof claudeCodeSettings.env];
+        }
+      });
+
+      const response = await fetch('/api/claude-config', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(config),
+        body: JSON.stringify(claudeCodeSettings),
       });
       
       if (response.ok) {
@@ -147,6 +220,8 @@ export default function AdvancedClaudeConfiguration() {
     } catch (error) {
       console.error('Failed to save config:', error);
       alert('保存失败');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -154,16 +229,21 @@ export default function AdvancedClaudeConfiguration() {
     setConfig(prev => {
       const newConfig = { ...prev };
       const keys = path.split('.');
-      let current = newConfig;
+      let current: any = newConfig;
       
       for (let i = 0; i < keys.length - 1; i++) {
-        if (!current[keys[i]]) {
-          current[keys[i]] = {};
+        const key = keys[i];
+        if (!key) continue;
+        if (!current[key]) {
+          current[key] = {};
         }
-        current = current[keys[i]];
+        current = current[key];
       }
       
-      current[keys[keys.length - 1]] = value;
+      const lastKey = keys[keys.length - 1];
+      if (lastKey) {
+        current[lastKey] = value;
+      }
       return newConfig;
     });
   };
@@ -238,13 +318,29 @@ export default function AdvancedClaudeConfiguration() {
                     value={config.model}
                     onChange={(e) => handleConfigChange('model', e.target.value)}
                   >
-                    <option value="Claude Instant">Claude Instant</option>
-                    <option value="Claude 2">Claude 2</option>
-                    <option value="Claude 2.1">Claude 2.1</option>
-                    <option value="Claude 3 Opus">Claude 3 Opus</option>
-                    <option value="Claude 3 Sonnet">Claude 3 Sonnet</option>
-                    <option value="GLM-4.5">GLM-4.5</option>
-                    <option value="GLM-4.5-Air">GLM-4.5-Air</option>
+                    <optgroup label="Claude 4 系列">
+                      <option value="claude-4-20250514">
+                        Claude 4 - 最新模型
+                      </option>
+                    </optgroup>
+                    <optgroup label="Claude 3.x 系列">
+                      <option value="claude-3-7-sonnet-20250219">
+                        Claude 3.7 Sonnet - 扩展思考，128K输出
+                      </option>
+                      <option value="claude-3-5-sonnet-20241022">
+                        Claude 3.5 Sonnet - 支持计算机使用 (推荐)
+                      </option>
+                      <option value="claude-3-haiku-20240307">Claude 3 Haiku - 最经济选择</option>
+                    </optgroup>
+                    <optgroup label="Claude 2.x 系列">
+                      <option value="claude-2.1">Claude 2.1</option>
+                      <option value="claude-2">Claude 2</option>
+                      <option value="claude-instant-1.2">Claude Instant 1.2</option>
+                    </optgroup>
+                    <optgroup label="其他模型">
+                      <option value="glm-4.5">GLM-4.5</option>
+                      <option value="glm-4.5-air">GLM-4.5-Air</option>
+                    </optgroup>
                   </select>
                 </div>
                 
@@ -541,7 +637,7 @@ export default function AdvancedClaudeConfiguration() {
       </main>
 
       {/* Footer */}
-      <ClaudeConfigurationFooter />
+      <ClaudeConfigurationFooter onSave={saveConfig} isLoading={isSaving} />
     </div>
   );
 }

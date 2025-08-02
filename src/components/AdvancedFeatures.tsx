@@ -21,7 +21,7 @@ export default function AdvancedFeatures({ config, onConfigChange }: AdvancedFea
 
   const removeToolPath = (index: number) => {
     const currentPaths = config.custom_tools?.tool_paths || [];
-    onConfigChange('custom_tools.tool_paths', currentPaths.filter((_, i) => i !== index));
+    onConfigChange('custom_tools.tool_paths', currentPaths.filter((_: any, i: number) => i !== index));
   };
 
   return (
@@ -53,7 +53,7 @@ export default function AdvancedFeatures({ config, onConfigChange }: AdvancedFea
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">工具路径</label>
                 <div className="space-y-2">
-                  {config.custom_tools.tool_paths?.map((path, index) => (
+                  {config.custom_tools.tool_paths?.map((path: string, index: number) => (
                     <div key={index} className="flex items-center space-x-2">
                       <input
                         type="text"
@@ -103,7 +103,7 @@ export default function AdvancedFeatures({ config, onConfigChange }: AdvancedFea
                           if (e.target.checked) {
                             onConfigChange('custom_tools.permissions', [...currentPermissions, permission]);
                           } else {
-                            onConfigChange('custom_tools.permissions', currentPermissions.filter(p => p !== permission));
+                            onConfigChange('custom_tools.permissions', currentPermissions.filter((p: string) => p !== permission));
                           }
                         }}
                         className="toggle"

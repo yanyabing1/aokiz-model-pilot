@@ -1,76 +1,113 @@
-export interface ClaudeConfig {
+// Claude Code settings format (official)
+export interface ClaudeCodeSettings {
+  $schema?: string;
+  
+  // Environment variables
+  env?: {
+    // Authentication
+    ANTHROPIC_API_KEY?: string;
+    ANTHROPIC_BASE_URL?: string;
+    ANTHROPIC_AUTH_TOKEN?: string;
+    ANTHROPIC_CUSTOM_HEADERS?: string;
+    AWS_BEARER_TOKEN_BEDROCK?: string;
+    ANTHROPIC_BEDROCK_BASE_URL?: string;
+    ANTHROPIC_VERTEX_BASE_URL?: string;
+    ANTHROPIC_VERTEX_PROJECT_ID?: string;
+    
+    // Model configuration
+    ANTHROPIC_MODEL?: string;
+    ANTHROPIC_SMALL_FAST_MODEL?: string;
+    ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION?: string;
+    
+    // Cloud service configuration
+    CLAUDE_CODE_USE_BEDROCK?: string;
+    CLAUDE_CODE_USE_VERTEX?: string;
+    CLAUDE_CODE_SKIP_BEDROCK_AUTH?: string;
+    CLAUDE_CODE_SKIP_VERTEX_AUTH?: string;
+    CLOUD_ML_REGION?: string;
+    
+    // Bash configuration
+    BASH_DEFAULT_TIMEOUT_MS?: string;
+    BASH_MAX_TIMEOUT_MS?: string;
+    BASH_MAX_OUTPUT_LENGTH?: string;
+    CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR?: string;
+    
+    // Output and token limits
+    CLAUDE_CODE_MAX_OUTPUT_TOKENS?: string;
+    MAX_THINKING_TOKENS?: string;
+    MAX_MCP_OUTPUT_TOKENS?: string;
+    
+    // MCP configuration
+    MCP_TIMEOUT?: string;
+    MCP_TOOL_TIMEOUT?: string;
+    
+    // Debug and logging
+    CLAUDE_CODE_API_KEY_HELPER_TTL_MS?: string;
+    CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL?: string;
+    CLAUDE_CODE_DISABLE_TERMINAL_TITLE?: string;
+    
+    // Disable options
+    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC?: string;
+    DISABLE_AUTOUPDATER?: string;
+    DISABLE_BUG_COMMAND?: string;
+    DISABLE_COST_WARNINGS?: string;
+    DISABLE_ERROR_REPORTING?: string;
+    DISABLE_NON_ESSENTIAL_MODEL_CALLS?: string;
+    DISABLE_TELEMETRY?: string;
+    
+    // Network proxy
+    HTTP_PROXY?: string;
+    HTTPS_PROXY?: string;
+  };
+  
+  // Tool permissions
+  permissions?: {
+    allow?: string[];
+    deny?: string[];
+    additionalDirectories?: string[];
+    defaultMode?: string;
+    disableBypassPermissionsMode?: string;
+  };
+  
+  // Hooks
+  hooks?: {
+    PreToolUse?: Record<string, string>;
+    PostToolUse?: Record<string, string>;
+    Notification?: string;
+    Stop?: string;
+  };
+  
+  // Model settings
   model?: string;
-  temperature?: number;
+  
+  // Authentication
+  apiKeyHelper?: string;
+  awsAuthRefresh?: string;
+  awsCredentialExport?: string;
+  forceLoginMethod?: 'claudeai' | 'console';
+  
+  // Configuration management
+  cleanupPeriodDays?: number;
+  includeCoAuthoredBy?: boolean;
+  
+  // MCP servers
+  enableAllProjectMcpServers?: boolean;
+  enabledMcpjsonServers?: string[];
+  disabledMcpjsonServers?: string[];
+  
+  // Legacy compatibility - these will be flattened from claude_settings
   max_tokens?: number;
+  temperature?: number;
   top_p?: number;
   system_prompt?: string;
-  auto_save?: boolean;
-  theme?: 'light' | 'dark' | 'system';
   
-  // API Settings
-  api_endpoint?: string;
-  anthropic_base_url?: string;
-  anthropic_auth_token?: string;
-  streaming?: boolean;
-  timeout?: number;
-  max_retries?: number;
-  rate_limit?: {
-    requests_per_minute?: number;
-    tokens_per_minute?: number;
-  };
-  
-  // Editor Settings
-  editor_settings?: {
-    tab_size?: number;
-    word_wrap?: boolean;
-    line_numbers?: boolean;
-    code_folding?: boolean;
-    font_size?: number;
-    auto_completion?: boolean;
-    syntax_highlighting?: boolean;
-    minimap?: boolean;
-    bracket_matching?: boolean;
-    auto_indent?: boolean;
-  };
-  
-  // File & Workspace Settings
-  file_exclusions?: string[];
-  workspace_settings?: {
-    project_specific?: boolean;
-    multi_file_context?: boolean;
-    context_window?: number;
-    include_hidden_files?: boolean;
-    follow_symlinks?: boolean;
-  };
-  
-  // Language Settings
-  language_settings?: {
-    [language: string]: {
-      tab_size?: number;
-      formatter?: string;
-      linter?: string;
-      auto_completion?: boolean;
-    };
-  };
-  
-  // Privacy & Security
-  privacy_settings?: {
-    data_retention_days?: number;
-    disable_telemetry?: boolean;
-    disable_analytics?: boolean;
-    local_processing_only?: boolean;
-  };
-  
-  // Advanced Features
-  custom_tools?: {
-    enabled?: boolean;
-    tool_paths?: string[];
-    permissions?: string[];
-  };
-  
-  // UI Settings
+  // Additional UI-specific settings
   ui_settings?: {
-    interface_density?: 'compact' | 'comfortable' | 'spacious';
+    theme?: 'light' | 'dark' | 'system';
+    preferredNotifChannel?: 'iterm2' | 'iterm2_with_bell' | 'terminal_bell' | 'notifications_disabled';
+    autoUpdates?: boolean;
+    verbose?: boolean;
+    interface_density?: 'comfortable' | 'compact' | 'spacious';
     accent_color?: string;
     font_size?: number;
     show_line_numbers?: boolean;
@@ -82,4 +119,106 @@ export interface ClaudeConfig {
       desktop?: boolean;
     };
   };
+}
+
+// Legacy configuration interface for compatibility
+export interface ClaudeConfig {
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  top_p?: number;
+  system_prompt?: string;
+  auto_save?: boolean;
+  theme?: 'light' | 'dark' | 'system';
+  api_endpoint?: string;
+  anthropic_base_url?: string;
+  anthropic_auth_token?: string;
+  streaming?: boolean;
+  timeout?: number;
+  max_retries?: number;
+  rate_limit?: {
+    requests_per_minute?: number;
+    tokens_per_minute?: number;
+  };
+  
+  // Environment variables
+  env?: {
+    ANTHROPIC_API_KEY?: string;
+    ANTHROPIC_BASE_URL?: string;
+    ANTHROPIC_AUTH_TOKEN?: string;
+    ANTHROPIC_CUSTOM_HEADERS?: string;
+    AWS_BEARER_TOKEN_BEDROCK?: string;
+    ANTHROPIC_BEDROCK_BASE_URL?: string;
+    ANTHROPIC_VERTEX_BASE_URL?: string;
+    ANTHROPIC_VERTEX_PROJECT_ID?: string;
+    ANTHROPIC_MODEL?: string;
+    ANTHROPIC_SMALL_FAST_MODEL?: string;
+    ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION?: string;
+    CLAUDE_CODE_USE_BEDROCK?: string;
+    CLAUDE_CODE_USE_VERTEX?: string;
+    CLAUDE_CODE_SKIP_BEDROCK_AUTH?: string;
+    CLAUDE_CODE_SKIP_VERTEX_AUTH?: string;
+    CLOUD_ML_REGION?: string;
+    BASH_DEFAULT_TIMEOUT_MS?: string;
+    BASH_MAX_TIMEOUT_MS?: string;
+    BASH_MAX_OUTPUT_LENGTH?: string;
+    CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR?: string;
+    CLAUDE_CODE_MAX_OUTPUT_TOKENS?: string;
+    MAX_THINKING_TOKENS?: string;
+    MAX_MCP_OUTPUT_TOKENS?: string;
+    MCP_TIMEOUT?: string;
+    MCP_TOOL_TIMEOUT?: string;
+    CLAUDE_CODE_API_KEY_HELPER_TTL_MS?: string;
+    CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL?: string;
+    CLAUDE_CODE_DISABLE_TERMINAL_TITLE?: string;
+    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC?: string;
+    DISABLE_AUTOUPDATER?: string;
+    DISABLE_BUG_COMMAND?: string;
+    DISABLE_COST_WARNINGS?: string;
+    DISABLE_ERROR_REPORTING?: string;
+    DISABLE_NON_ESSENTIAL_MODEL_CALLS?: string;
+    DISABLE_TELEMETRY?: string;
+    HTTP_PROXY?: string;
+    HTTPS_PROXY?: string;
+  };
+  
+  // Permissions
+  permissions?: {
+    allow?: string[];
+    deny?: string[];
+    additionalDirectories?: string[];
+    defaultMode?: string;
+    disableBypassPermissionsMode?: string;
+  };
+  
+  // Hooks
+  hooks?: {
+    PreToolUse?: Record<string, string>;
+    PostToolUse?: Record<string, string>;
+    Notification?: string;
+    Stop?: string;
+  };
+  
+  // MCP servers
+  enableAllProjectMcpServers?: boolean;
+  enabledMcpjsonServers?: string[];
+  disabledMcpjsonServers?: string[];
+  
+  // Configuration management
+  cleanupPeriodDays?: number;
+  includeCoAuthoredBy?: boolean;
+  
+  // Additional fields
+  apiKeyHelper?: string;
+  awsAuthRefresh?: string;
+  awsCredentialExport?: string;
+  forceLoginMethod?: 'claudeai' | 'console';
+  
+  editor_settings?: any;
+  file_exclusions?: string[];
+  workspace_settings?: any;
+  language_settings?: any;
+  privacy_settings?: any;
+  custom_tools?: any;
+  ui_settings?: any;
 }
