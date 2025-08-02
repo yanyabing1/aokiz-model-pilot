@@ -53,7 +53,7 @@ interface Configuration {
 const defaultConfiguration: Configuration = {
   model: 'Claude 3 Sonnet',
   temperature: 0.7,
-  maxTokens: 40960,
+  maxTokens: 10000000,
   topP: 0.9,
   systemPrompt: `You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
 

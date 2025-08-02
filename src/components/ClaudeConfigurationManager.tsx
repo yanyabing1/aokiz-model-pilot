@@ -1,7 +1,7 @@
 'use client'
 
 import { ClaudeCodeSettings, ClaudeConfig } from '@/lib/config'
-import { message, Modal, notification, Tooltip } from 'antd'
+import { Modal, Tooltip, message, notification } from 'antd'
 import { useEffect, useState } from 'react'
 import ClaudeConfigurationFooter from './ClaudeConfigurationFooter'
 import ClaudeConfigurationHeader from './ClaudeConfigurationHeader'
@@ -18,7 +18,7 @@ export default function ClaudeConfigurationManager() {
   const [config, setConfig] = useState<ClaudeConfig>({
     model: 'glm-4.5',
     temperature: 0.7,
-    max_tokens: 40960,
+    max_tokens: 10000000,
     top_p: 0.9,
     system_prompt: `你是一个有帮助、尊重和诚实的助手。始终尽可能有帮助地回答，同时保持安全。你的回答不应包含任何有害、不道德、种族主义、性别歧视、有毒、危险或非法的内容。请确保你的回答在社会上是无偏见的，并且是积极的。
 如果一个问题的含义不清楚或事实上不连贯，请解释为什么而不是回答不正确的内容。如果你不知道问题的答案，请不要分享虚假信息。`,
@@ -287,6 +287,24 @@ export default function ClaudeConfigurationManager() {
           Notification: '',
           Stop: '',
         },
+
+        // API Configuration
+        api_config: config.api_config || {
+          base_url: 'https://open.bigmodel.cn/api/anthropic',
+          auth_token: '',
+          api_key: '',
+          timeout: 30000,
+          max_retries: 3,
+          streaming: true,
+          rate_limit: {
+            requests_per_minute: 60,
+            tokens_per_minute: 90000,
+          },
+          preset: 'bigmodel',
+          connection_status: 'disconnected',
+          last_tested: '',
+        },
+
         enableAllProjectMcpServers: config.enableAllProjectMcpServers || false,
         enabledMcpjsonServers: config.enabledMcpjsonServers || ['memory', 'github'],
         disabledMcpjsonServers: config.disabledMcpjsonServers || [],
@@ -414,7 +432,6 @@ export default function ClaudeConfigurationManager() {
     { id: 'permissions', label: '权限配置', icon: 'fas fa-shield-alt' },
     { id: 'environment', label: '环境变量', icon: 'fas fa-terminal' },
     { id: 'hooks', label: '钩子配置', icon: 'fas fa-link' },
-    { id: 'api', label: 'API设置', icon: 'fas fa-plug' },
     { id: 'mcp', label: 'MCP服务器', icon: 'fas fa-server' },
     { id: 'ui', label: '界面设置', icon: 'fas fa-palette' },
   ]
@@ -678,16 +695,8 @@ export default function ClaudeConfigurationManager() {
                   </div>
                 )}
                 {!config.anthropic_auth_token && (
-                  <div>• 缺少 ANTHROPIC_AUTH_TOKEN，请在API设置中填入你的认证令牌</div>
+                  <div>• 缺少 ANTHROPIC_AUTH_TOKEN，请在基础设置中的API配置部分填入你的认证令牌</div>
                 )}
-                <div className="mt-2">
-                  <button
-                    onClick={() => setActiveTab('api')}
-                    className="text-blue-400 hover:text-blue-300 underline text-xs"
-                  >
-                    点击这里前往API设置 →
-                  </button>
-                </div>
               </div>
             </div>
           )}
@@ -777,9 +786,9 @@ export default function ClaudeConfigurationManager() {
                   <div className="relative">
                     <input
                       type="number"
-                      value={config.max_tokens || 40960}
+                      value={config.max_tokens || 10000000}
                       min="1"
-                      max="40960"
+                      max="10000000"
                       onChange={e => handleConfigChange('max_tokens', parseInt(e.target.value))}
                       className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                     />
@@ -843,6 +852,266 @@ export default function ClaudeConfigurationManager() {
                   <i className="fas fa-save mr-2"></i>
                   保存提示
                 </button>
+              </div>
+            </div>
+
+            {/* API Settings Card */}
+            <div className="lg:col-span-2 glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow hover:shadow-glow-lg transition-all duration-500 transform hover:-translate-y-1">
+              <div className="flex items-center mb-6">
+                <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center mr-3">
+                  <i className="fas fa-plug text-accent"></i>
+                </div>
+                <h2 className="text-xl font-bold text-white">API配置</h2>
+              </div>
+              
+              {/* Anthropic Configuration - Highlighted Section */}
+              <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/30 rounded-xl p-6 mb-6">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center mr-3">
+                    <i className="fas fa-key text-primary text-sm"></i>
+                  </div>
+                  <h4 className="text-lg font-bold text-white">Anthropic 核心配置</h4>
+                  <div className="ml-2 px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full">
+                    重要
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <i className="fas fa-globe mr-1"></i>
+                      ANTHROPIC_BASE_URL
+                    </label>
+                    <input
+                      type="text"
+                      value={config.anthropic_base_url}
+                      onChange={e => handleConfigChange('anthropic_base_url', e.target.value)}
+                      placeholder="https://open.bigmodel.cn/api/anthropic"
+                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Claude API的基础URL地址</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <i className="fas fa-shield-alt mr-1"></i>
+                      ANTHROPIC_AUTH_TOKEN
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showAuthToken ? 'text' : 'password'}
+                        value={config.anthropic_auth_token}
+                        onChange={e => handleConfigChange('anthropic_auth_token', e.target.value)}
+                        placeholder="输入你的认证令牌"
+                        className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 pr-10 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowAuthToken(!showAuthToken)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
+                      >
+                        <i className={`fas ${showAuthToken ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">API访问认证令牌</p>
+                  </div>
+                </div>
+
+                {/* Quick Setup Button */}
+                <div className="flex justify-end mt-4">
+                  <Tooltip title="自动填入推荐的API配置值">
+                    <button
+                      onClick={() => {
+                        handleConfigChange(
+                          'anthropic_base_url',
+                          'https://open.bigmodel.cn/api/anthropic'
+                        )
+                        handleConfigChange(
+                          'anthropic_auth_token',
+                          '45150a6b55f24386b4e00ca3d60a1264.LBYrMMJ292Jz5O08'
+                        )
+                        message.success('已设置推荐配置')
+                        notification.info({
+                          message: '快速配置完成',
+                          description:
+                            '已设置推荐的配置值，请点击"保存配置"按钮保存到Claude配置文件。',
+                          duration: 4,
+                        })
+                      }}
+                      className="px-4 py-2 bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-400 border border-green-500/30 rounded-lg hover:from-green-500/30 hover:to-green-600/30 transition-all duration-300 text-sm flex items-center"
+                    >
+                      <i className="fas fa-magic mr-2"></i>
+                      快速配置推荐值
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+
+              {/* Other API Settings */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    标准API端点
+                  </label>
+                  <input
+                    type="text"
+                    value={config.api_endpoint}
+                    onChange={e => handleConfigChange('api_endpoint', e.target.value)}
+                    className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">备用API端点地址</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    超时时间 (ms)
+                  </label>
+                  <input
+                    type="number"
+                    value={config.timeout}
+                    onChange={e => handleConfigChange('timeout', parseInt(e.target.value))}
+                    className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">API请求超时时间</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    最大重试次数
+                  </label>
+                  <input
+                    type="number"
+                    value={config.max_retries}
+                    onChange={e => handleConfigChange('max_retries', parseInt(e.target.value))}
+                    className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">失败时重试次数</p>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-dark/30 rounded-lg">
+                  <div>
+                    <label className="text-sm font-medium text-gray-300 flex items-center">
+                      <i className="fas fa-stream mr-2"></i>
+                      流式响应
+                    </label>
+                    <p className="text-xs text-gray-400 mt-1">启用实时响应流</p>
+                  </div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={config.streaming}
+                      onChange={e => handleConfigChange('streaming', e.target.checked)}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    每分钟请求限制
+                  </label>
+                  <input
+                    type="number"
+                    value={config.rate_limit?.requests_per_minute || 60}
+                    onChange={e =>
+                      handleConfigChange('rate_limit.requests_per_minute', parseInt(e.target.value))
+                    }
+                    className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">API速率限制配置</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    每分钟令牌限制
+                  </label>
+                  <input
+                    type="number"
+                    value={config.rate_limit?.tokens_per_minute || 90000}
+                    onChange={e =>
+                      handleConfigChange('rate_limit.tokens_per_minute', parseInt(e.target.value))
+                    }
+                    className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">令牌使用速率限制</p>
+                </div>
+              </div>
+
+              {/* Configuration Actions */}
+              <div className="flex flex-col sm:flex-row gap-4 mt-6 pt-6 border-t border-gray-700">
+                <Tooltip title="测试当前API配置的连接状态">
+                  <button
+                    onClick={async () => {
+                      const result = await testConfiguration()
+                      if (result.success) {
+                        message.success(result.message)
+                        notification.success({
+                          message: '连接测试成功',
+                          description: '配置验证通过，连接正常',
+                          duration: 3,
+                        })
+                      } else {
+                        message.error(result.message)
+                        notification.error({
+                          message: '连接测试失败',
+                          description: result.message,
+                          duration: 5,
+                        })
+                      }
+                    }}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg hover:from-blue-500/30 hover:to-blue-600/30 transition-all duration-300 flex items-center justify-center"
+                  >
+                    <i className="fas fa-plug mr-2"></i>
+                    测试配置连接
+                  </button>
+                </Tooltip>
+
+                <Tooltip title="查看完整的配置文件内容">
+                  <button
+                    onClick={() => {
+                      loadConfigPreview()
+                      setShowConfigPreview(true)
+                    }}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500/20 to-purple-600/20 text-purple-400 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-purple-600/30 transition-all duration-300 flex items-center justify-center"
+                  >
+                    <i className="fas fa-eye mr-2"></i>
+                    查看完整配置
+                  </button>
+                </Tooltip>
+
+                <Tooltip title="显示当前配置的调试信息">
+                  <button
+                    onClick={() => {
+                      console.log('=== 调试信息 ===')
+                      console.log('当前界面配置:', config)
+                      console.log('ANTHROPIC_BASE_URL:', config.anthropic_base_url)
+                      console.log(
+                        'ANTHROPIC_AUTH_TOKEN:',
+                        config.anthropic_auth_token ? '已设置' : '未设置'
+                      )
+                      console.log('Model:', config.model)
+
+                      const debugInfo = `ANTHROPIC_BASE_URL: ${config.anthropic_base_url || '未设置'}
+ANTHROPIC_AUTH_TOKEN: ${config.anthropic_auth_token ? '已设置' : '未设置'}
+Model: ${config.model}`
+
+                      Modal.info({
+                        title: '调试信息',
+                        content: (
+                          <div className="font-mono whitespace-pre-line text-sm">{debugInfo}</div>
+                        ),
+                        okText: '确定',
+                        width: 500,
+                      })
+
+                      message.info('调试信息已输出到控制台')
+                    }}
+                    className="px-4 py-3 bg-gradient-to-r from-orange-500/20 to-orange-600/20 text-orange-400 border border-orange-500/30 rounded-lg hover:from-orange-500/30 hover:to-orange-600/30 transition-all duration-300 flex items-center justify-center"
+                  >
+                    <i className="fas fa-bug mr-2"></i>
+                    调试信息
+                  </button>
+                </Tooltip>
               </div>
             </div>
 
@@ -1039,6 +1308,7 @@ export default function ClaudeConfigurationManager() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_API_KEY</label>
+                    <p className="text-xs text-gray-400 mb-2">Anthropic API 密钥，用于访问 Claude 模型</p>
                     <input
                       type="password"
                       value={config.env?.ANTHROPIC_API_KEY || ''}
@@ -1048,6 +1318,7 @@ export default function ClaudeConfigurationManager() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_BASE_URL</label>
+                    <p className="text-xs text-gray-400 mb-2">Anthropic API 基础 URL，可用于自定义 API 端点</p>
                     <input
                       type="text"
                       value={config.env?.ANTHROPIC_BASE_URL || ''}
@@ -1056,16 +1327,47 @@ export default function ClaudeConfigurationManager() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_AUTH_TOKEN</label>
-                    <input
-                      type="password"
-                      value={config.env?.ANTHROPIC_AUTH_TOKEN || ''}
-                      onChange={(e) => handleConfigChange('env.ANTHROPIC_AUTH_TOKEN', e.target.value)}
-                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
-                    />
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <i className="fas fa-shield-alt mr-1"></i>
+                      ANTHROPIC_AUTH_TOKEN
+                    </label>
+                    <p className="text-xs text-gray-400 mb-2">Anthropic 认证令牌，用于身份验证</p>
+                    <div className="relative">
+                      <input
+                        type={showAuthToken ? 'text' : 'password'}
+                        value={config.env?.ANTHROPIC_AUTH_TOKEN || ''}
+                        onChange={(e) => handleConfigChange('env.ANTHROPIC_AUTH_TOKEN', e.target.value)}
+                        placeholder="输入你的认证令牌"
+                        className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 pr-10 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowAuthToken(!showAuthToken)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
+                      >
+                        <i className={`fas ${showAuthToken ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                      </button>
+                    </div>
+                    <div className="flex justify-end mt-2">
+                      <button
+                        onClick={() => {
+                          handleConfigChange('env.ANTHROPIC_AUTH_TOKEN', config.anthropic_auth_token || '')
+                          notification.info({
+                            message: '快速配置完成',
+                            description: '已设置推荐的配置值，请点击"保存配置"按钮保存到Claude配置文件。',
+                            duration: 4,
+                          })
+                        }}
+                        className="px-3 py-1 bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-400 border border-green-500/30 rounded-md hover:from-green-500/30 hover:to-green-600/30 transition-all text-xs flex items-center"
+                      >
+                        <i className="fas fa-magic mr-1"></i>
+                        快速配置推荐值
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">AWS_BEARER_TOKEN_BEDROCK</label>
+                    <p className="text-xs text-gray-400 mb-2">AWS Bedrock 服务的认证令牌</p>
                     <input
                       type="password"
                       value={config.env?.AWS_BEARER_TOKEN_BEDROCK || ''}
@@ -1082,6 +1384,7 @@ export default function ClaudeConfigurationManager() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_MODEL</label>
+                    <p className="text-xs text-gray-400 mb-2">默认使用的 Anthropic 模型名称</p>
                     <input
                       type="text"
                       value={config.env?.ANTHROPIC_MODEL || ''}
@@ -1091,6 +1394,7 @@ export default function ClaudeConfigurationManager() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">ANTHROPIC_SMALL_FAST_MODEL</label>
+                    <p className="text-xs text-gray-400 mb-2">快速小型模型名称，用于简单任务</p>
                     <input
                       type="text"
                       value={config.env?.ANTHROPIC_SMALL_FAST_MODEL || ''}
@@ -1107,6 +1411,7 @@ export default function ClaudeConfigurationManager() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">BASH_DEFAULT_TIMEOUT_MS</label>
+                    <p className="text-xs text-gray-400 mb-2">Bash 命令默认超时时间（毫秒）</p>
                     <input
                       type="number"
                       value={config.env?.BASH_DEFAULT_TIMEOUT_MS || ''}
@@ -1116,6 +1421,7 @@ export default function ClaudeConfigurationManager() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">BASH_MAX_TIMEOUT_MS</label>
+                    <p className="text-xs text-gray-400 mb-2">Bash 命令最大超时时间（毫秒）</p>
                     <input
                       type="number"
                       value={config.env?.BASH_MAX_TIMEOUT_MS || ''}
@@ -1125,6 +1431,7 @@ export default function ClaudeConfigurationManager() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">BASH_MAX_OUTPUT_LENGTH</label>
+                    <p className="text-xs text-gray-400 mb-2">Bash 命令输出的最大长度限制</p>
                     <input
                       type="number"
                       value={config.env?.BASH_MAX_OUTPUT_LENGTH || ''}
@@ -1141,6 +1448,7 @@ export default function ClaudeConfigurationManager() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">CLAUDE_CODE_MAX_OUTPUT_TOKENS</label>
+                    <p className="text-xs text-gray-400 mb-2">Claude Code 最大输出令牌数限制</p>
                     <input
                       type="number"
                       value={config.env?.CLAUDE_CODE_MAX_OUTPUT_TOKENS || ''}
@@ -1150,6 +1458,7 @@ export default function ClaudeConfigurationManager() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">MAX_THINKING_TOKENS</label>
+                    <p className="text-xs text-gray-400 mb-2">最大思考令牌数，用于控制推理过程</p>
                     <input
                       type="number"
                       value={config.env?.MAX_THINKING_TOKENS || ''}
@@ -1166,6 +1475,7 @@ export default function ClaudeConfigurationManager() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">MCP_TIMEOUT</label>
+                    <p className="text-xs text-gray-400 mb-2">MCP（模型上下文协议）超时时间</p>
                     <input
                       type="number"
                       value={config.env?.MCP_TIMEOUT || ''}
@@ -1175,6 +1485,7 @@ export default function ClaudeConfigurationManager() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">MCP_TOOL_TIMEOUT</label>
+                    <p className="text-xs text-gray-400 mb-2">MCP 工具执行超时时间</p>
                     <input
                       type="number"
                       value={config.env?.MCP_TOOL_TIMEOUT || ''}
@@ -1190,7 +1501,10 @@ export default function ClaudeConfigurationManager() {
                 <h4 className="text-lg font-semibold text-white mb-4">禁用选项</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-300">DISABLE_TELEMETRY</label>
+                    <div>
+                      <label className="text-sm font-medium text-gray-300">DISABLE_TELEMETRY</label>
+                      <p className="text-xs text-gray-400">禁用遥测数据收集</p>
+                    </div>
                     <input
                       type="checkbox"
                       checked={config.env?.DISABLE_TELEMETRY === '1' || config.env?.DISABLE_TELEMETRY === 'true'}
@@ -1199,7 +1513,10 @@ export default function ClaudeConfigurationManager() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-300">DISABLE_AUTOUPDATER</label>
+                    <div>
+                      <label className="text-sm font-medium text-gray-300">DISABLE_AUTOUPDATER</label>
+                      <p className="text-xs text-gray-400">禁用自动更新功能</p>
+                    </div>
                     <input
                       type="checkbox"
                       checked={config.env?.DISABLE_AUTOUPDATER === '1' || config.env?.DISABLE_AUTOUPDATER === 'true'}
@@ -1208,7 +1525,10 @@ export default function ClaudeConfigurationManager() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-300">DISABLE_ERROR_REPORTING</label>
+                    <div>
+                      <label className="text-sm font-medium text-gray-300">DISABLE_ERROR_REPORTING</label>
+                      <p className="text-xs text-gray-400">禁用错误报告功能</p>
+                    </div>
                     <input
                       type="checkbox"
                       checked={config.env?.DISABLE_ERROR_REPORTING === '1' || config.env?.DISABLE_ERROR_REPORTING === 'true'}
@@ -1217,7 +1537,10 @@ export default function ClaudeConfigurationManager() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-300">DISABLE_COST_WARNINGS</label>
+                    <div>
+                      <label className="text-sm font-medium text-gray-300">DISABLE_COST_WARNINGS</label>
+                      <p className="text-xs text-gray-400">禁用成本警告提示</p>
+                    </div>
                     <input
                       type="checkbox"
                       checked={config.env?.DISABLE_COST_WARNINGS === '1' || config.env?.DISABLE_COST_WARNINGS === 'true'}
@@ -1230,6 +1553,7 @@ export default function ClaudeConfigurationManager() {
             </div>
           </div>
         )}
+
 
         {/* Hooks Settings */}
         {activeTab === 'hooks' && (
@@ -1498,266 +1822,6 @@ export default function ClaudeConfigurationManager() {
           </div>
         )}
 
-        {/* API Settings */}
-        {activeTab === 'api' && (
-          <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
-            <h3 className="text-xl font-bold text-white mb-6 flex items-center">
-              <i className="fas fa-plug text-primary mr-3"></i>
-              API设置
-            </h3>
-            <div className="grid grid-cols-1 gap-6">
-              {/* Anthropic Configuration - Highlighted Section */}
-              <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/30 rounded-xl p-6">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center mr-3">
-                    <i className="fas fa-key text-primary text-sm"></i>
-                  </div>
-                  <h4 className="text-lg font-bold text-white">Anthropic 核心配置</h4>
-                  <div className="ml-2 px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full">
-                    重要
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      <i className="fas fa-globe mr-1"></i>
-                      ANTHROPIC_BASE_URL
-                    </label>
-                    <input
-                      type="text"
-                      value={config.anthropic_base_url}
-                      onChange={e => handleConfigChange('anthropic_base_url', e.target.value)}
-                      placeholder="https://open.bigmodel.cn/api/anthropic"
-                      className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">Claude API的基础URL地址</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      <i className="fas fa-shield-alt mr-1"></i>
-                      ANTHROPIC_AUTH_TOKEN
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showAuthToken ? 'text' : 'password'}
-                        value={config.anthropic_auth_token}
-                        onChange={e => handleConfigChange('anthropic_auth_token', e.target.value)}
-                        placeholder="输入你的认证令牌"
-                        className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 pr-10 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowAuthToken(!showAuthToken)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
-                      >
-                        <i className={`fas ${showAuthToken ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">API访问认证令牌</p>
-                  </div>
-                </div>
-
-                {/* Quick Setup Button */}
-                <div className="flex justify-end mt-4">
-                  <Tooltip title="自动填入推荐的API配置值">
-                    <button
-                      onClick={() => {
-                        handleConfigChange(
-                          'anthropic_base_url',
-                          'https://open.bigmodel.cn/api/anthropic'
-                        )
-                        handleConfigChange(
-                          'anthropic_auth_token',
-                          '45150a6b55f24386b4e00ca3d60a1264.LBYrMMJ292Jz5O08'
-                        )
-                        message.success('已设置推荐配置')
-                        notification.info({
-                          message: '快速配置完成',
-                          description:
-                            '已设置推荐的配置值，请点击"保存配置"按钮保存到Claude配置文件。',
-                          duration: 4,
-                        })
-                      }}
-                      className="px-4 py-2 bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-400 border border-green-500/30 rounded-lg hover:from-green-500/30 hover:to-green-600/30 transition-all duration-300 text-sm flex items-center"
-                    >
-                      <i className="fas fa-magic mr-2"></i>
-                      快速配置推荐值
-                    </button>
-                  </Tooltip>
-                </div>
-              </div>
-
-              {/* Other API Settings */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    标准API端点
-                  </label>
-                  <input
-                    type="text"
-                    value={config.api_endpoint}
-                    onChange={e => handleConfigChange('api_endpoint', e.target.value)}
-                    className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">备用API端点地址</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    超时时间 (ms)
-                  </label>
-                  <input
-                    type="number"
-                    value={config.timeout}
-                    onChange={e => handleConfigChange('timeout', parseInt(e.target.value))}
-                    className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">API请求超时时间</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    最大重试次数
-                  </label>
-                  <input
-                    type="number"
-                    value={config.max_retries}
-                    onChange={e => handleConfigChange('max_retries', parseInt(e.target.value))}
-                    className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">失败时重试次数</p>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-dark/30 rounded-lg">
-                  <div>
-                    <label className="text-sm font-medium text-gray-300 flex items-center">
-                      <i className="fas fa-stream mr-2"></i>
-                      流式响应
-                    </label>
-                    <p className="text-xs text-gray-400 mt-1">启用实时响应流</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={config.streaming}
-                      onChange={e => handleConfigChange('streaming', e.target.checked)}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    每分钟请求限制
-                  </label>
-                  <input
-                    type="number"
-                    value={config.rate_limit?.requests_per_minute || 60}
-                    onChange={e =>
-                      handleConfigChange('rate_limit.requests_per_minute', parseInt(e.target.value))
-                    }
-                    className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">API速率限制配置</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    每分钟令牌限制
-                  </label>
-                  <input
-                    type="number"
-                    value={config.rate_limit?.tokens_per_minute || 90000}
-                    onChange={e =>
-                      handleConfigChange('rate_limit.tokens_per_minute', parseInt(e.target.value))
-                    }
-                    className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">令牌使用速率限制</p>
-                </div>
-              </div>
-
-              {/* Configuration Actions */}
-              <div className="flex flex-col sm:flex-row gap-4 mt-6 pt-6 border-t border-gray-700">
-                <Tooltip title="测试当前API配置的连接状态">
-                  <button
-                    onClick={async () => {
-                      const result = await testConfiguration()
-                      if (result.success) {
-                        message.success(result.message)
-                        notification.success({
-                          message: '连接测试成功',
-                          description: '配置验证通过，连接正常',
-                          duration: 3,
-                        })
-                      } else {
-                        message.error(result.message)
-                        notification.error({
-                          message: '连接测试失败',
-                          description: result.message,
-                          duration: 5,
-                        })
-                      }
-                    }}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg hover:from-blue-500/30 hover:to-blue-600/30 transition-all duration-300 flex items-center justify-center"
-                  >
-                    <i className="fas fa-plug mr-2"></i>
-                    测试配置连接
-                  </button>
-                </Tooltip>
-
-                <Tooltip title="查看完整的配置文件内容">
-                  <button
-                    onClick={() => {
-                      loadConfigPreview()
-                      setShowConfigPreview(true)
-                    }}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500/20 to-purple-600/20 text-purple-400 border border-purple-500/30 rounded-lg hover:from-purple-500/30 hover:to-purple-600/30 transition-all duration-300 flex items-center justify-center"
-                  >
-                    <i className="fas fa-eye mr-2"></i>
-                    查看完整配置
-                  </button>
-                </Tooltip>
-
-                <Tooltip title="显示当前配置的调试信息">
-                  <button
-                    onClick={() => {
-                      console.log('=== 调试信息 ===')
-                      console.log('当前界面配置:', config)
-                      console.log('ANTHROPIC_BASE_URL:', config.anthropic_base_url)
-                      console.log(
-                        'ANTHROPIC_AUTH_TOKEN:',
-                        config.anthropic_auth_token ? '已设置' : '未设置'
-                      )
-                      console.log('Model:', config.model)
-
-                      const debugInfo = `ANTHROPIC_BASE_URL: ${config.anthropic_base_url || '未设置'}
-ANTHROPIC_AUTH_TOKEN: ${config.anthropic_auth_token ? '已设置' : '未设置'}
-Model: ${config.model}`
-
-                      Modal.info({
-                        title: '调试信息',
-                        content: (
-                          <div className="font-mono whitespace-pre-line text-sm">{debugInfo}</div>
-                        ),
-                        okText: '确定',
-                        width: 500,
-                      })
-
-                      message.info('调试信息已输出到控制台')
-                    }}
-                    className="px-4 py-3 bg-gradient-to-r from-orange-500/20 to-orange-600/20 text-orange-400 border border-orange-500/30 rounded-lg hover:from-orange-500/30 hover:to-orange-600/30 transition-all duration-300 flex items-center justify-center"
-                  >
-                    <i className="fas fa-bug mr-2"></i>
-                    调试信息
-                  </button>
-                </Tooltip>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Configuration Preview Modal */}
         {showConfigPreview && (

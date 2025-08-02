@@ -9,7 +9,7 @@ export async function GET() {
   try {
     console.log('Attempting to read Claude config from:', CLAUDE_CONFIG_PATH);
     
-    // Default Claude Code settings
+    // Default Claude Code settings (official format)
     const defaultConfig = {
       $schema: 'https://json.schemastore.org/claude-code-settings.json',
       env: {
@@ -27,6 +27,7 @@ export async function GET() {
         allow: [
           'Bash(git:*)',
           'Bash(npm:*)',
+          'Bash(pnpm:*)',
           'Bash(node:*)',
           'Read(src/**)',
           'Edit(src/**)',
@@ -36,8 +37,16 @@ export async function GET() {
           'LS',
           'Task',
           'TodoWrite',
+          'MultiEdit(src/**)',
+          'NotebookRead',
+          'NotebookEdit(*.ipynb)',
         ],
-        deny: [],
+        deny: [
+          'Bash(rm -rf:*)',
+          'Bash(sudo:*)',
+          'Edit(/etc/**)',
+          'Write(/etc/**)',
+        ],
         additionalDirectories: [],
         defaultMode: 'acceptEdits',
       },
@@ -46,16 +55,6 @@ export async function GET() {
       enableAllProjectMcpServers: false,
       enabledMcpjsonServers: ['memory', 'github'],
       disabledMcpjsonServers: [],
-      max_tokens: 4096,
-      temperature: 0.7,
-      top_p: 1,
-      system_prompt: 'You are Claude, an AI assistant created by Anthropic.',
-      ui_settings: {
-        theme: 'dark',
-        preferredNotifChannel: 'iterm2',
-        autoUpdates: true,
-        verbose: false,
-      },
     };
     
     // Check if file exists
@@ -107,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if the incoming config is in Claude Code format
-    if (config.$schema || config.env) {
+    if (config.$schema || config.env || config.permissions) {
       // Direct Claude Code format - merge it properly
       const mergedConfig = {
         ...existingConfig,
@@ -118,24 +117,32 @@ export async function POST(request: NextRequest) {
         },
         permissions: {
           ...existingConfig.permissions,
-          ...config.permissions
+          ...config.permissions,
+          allow: config.permissions?.allow || existingConfig.permissions?.allow || [],
+          deny: config.permissions?.deny || existingConfig.permissions?.deny || [],
         },
         hooks: {
           ...existingConfig.hooks,
           ...config.hooks
-        },
-        ui_settings: {
-          ...existingConfig.ui_settings,
-          ...config.ui_settings
         }
       };
       
-      // Clean up undefined values
-      Object.keys(mergedConfig.env || {}).forEach(key => {
-        if (mergedConfig.env[key] === undefined || mergedConfig.env[key] === null || mergedConfig.env[key] === '') {
-          delete mergedConfig.env[key];
-        }
-      });
+      // Clean up undefined values from env
+      if (mergedConfig.env) {
+        Object.keys(mergedConfig.env).forEach(key => {
+          if (mergedConfig.env[key] === undefined || mergedConfig.env[key] === null || mergedConfig.env[key] === '') {
+            delete mergedConfig.env[key];
+          }
+        });
+      }
+      
+      // Remove non-Claude Code fields
+      delete mergedConfig.max_tokens;
+      delete mergedConfig.temperature;
+      delete mergedConfig.top_p;
+      delete mergedConfig.system_prompt;
+      delete mergedConfig.ui_settings;
+      delete mergedConfig.api_config;
       
       console.log('Merged Claude Code format config:', mergedConfig);
       await fs.writeFile(CLAUDE_CONFIG_PATH, JSON.stringify(mergedConfig, null, 2));
@@ -154,21 +161,11 @@ export async function POST(request: NextRequest) {
           CLAUDE_CODE_MAX_OUTPUT_TOKENS: config.max_tokens ? String(config.max_tokens) : '4096',
         },
         model: config.model || 'claude-3-5-sonnet-20241022',
-        max_tokens: config.max_tokens || 4096,
-        temperature: config.temperature || 0.7,
-        top_p: config.top_p || 1,
-        system_prompt: config.system_prompt || 'You are Claude, an AI assistant created by Anthropic.',
-        ui_settings: {
-          ...existingConfig.ui_settings,
-          theme: config.theme || 'dark',
-          autoUpdates: true,
-          preferredNotifChannel: 'iterm2',
-          verbose: false,
-        },
         permissions: existingConfig.permissions || {
           allow: [
             'Bash(git:*)',
             'Bash(npm:*)',
+            'Bash(pnpm:*)',
             'Bash(node:*)',
             'Read(src/**)',
             'Edit(src/**)',
@@ -178,21 +175,36 @@ export async function POST(request: NextRequest) {
             'LS',
             'Task',
             'TodoWrite',
+            'MultiEdit(src/**)',
+            'NotebookRead',
+            'NotebookEdit(*.ipynb)',
           ],
-          deny: [],
+          deny: [
+            'Bash(rm -rf:*)',
+            'Bash(sudo:*)',
+            'Edit(/etc/**)',
+            'Write(/etc/**)',
+          ],
           additionalDirectories: [],
           defaultMode: 'acceptEdits',
         },
+        cleanupPeriodDays: 30,
+        includeCoAuthoredBy: true,
+        enableAllProjectMcpServers: false,
+        enabledMcpjsonServers: ['memory', 'github'],
+        disabledMcpjsonServers: [],
       };
 
-      // Clean up undefined values
-      Object.keys(mergedConfig.env).forEach(key => {
-        if (mergedConfig.env[key] === undefined || mergedConfig.env[key] === null || mergedConfig.env[key] === '') {
-          delete mergedConfig.env[key];
-        }
-      });
+      // Clean up undefined values from env
+      if (mergedConfig.env) {
+        Object.keys(mergedConfig.env).forEach(key => {
+          if (mergedConfig.env[key] === undefined || mergedConfig.env[key] === null || mergedConfig.env[key] === '') {
+            delete mergedConfig.env[key];
+          }
+        });
+      }
 
-      console.log('Merged legacy format config:', mergedConfig);
+      console.log('Converted legacy to Claude Code format:', mergedConfig);
       await fs.writeFile(CLAUDE_CONFIG_PATH, JSON.stringify(mergedConfig, null, 2));
     }
     

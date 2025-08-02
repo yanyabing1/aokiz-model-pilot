@@ -119,6 +119,32 @@ export interface ClaudeCodeSettings {
       desktop?: boolean;
     };
   };
+
+  // API Configuration - Quick access settings
+  api_config?: {
+    // Core API settings
+    base_url?: string;
+    auth_token?: string;
+    api_key?: string;
+    
+    // Connection settings
+    timeout?: number;
+    max_retries?: number;
+    streaming?: boolean;
+    
+    // Rate limiting
+    rate_limit?: {
+      requests_per_minute?: number;
+      tokens_per_minute?: number;
+    };
+    
+    // Quick configuration presets
+    preset?: 'anthropic' | 'bigmodel' | 'custom';
+    
+    // Connection status
+    connection_status?: 'connected' | 'disconnected' | 'error';
+    last_tested?: string;
+  };
 }
 
 // Legacy configuration interface for compatibility
@@ -221,4 +247,19 @@ export interface ClaudeConfig {
   privacy_settings?: any;
   custom_tools?: any;
   ui_settings?: any;
+  api_config?: {
+    base_url?: string;
+    auth_token?: string;
+    api_key?: string;
+    timeout?: number;
+    max_retries?: number;
+    streaming?: boolean;
+    rate_limit?: {
+      requests_per_minute?: number;
+      tokens_per_minute?: number;
+    };
+    preset?: 'anthropic' | 'bigmodel' | 'custom';
+    connection_status?: 'connected' | 'disconnected' | 'error';
+    last_tested?: string;
+  };
 }

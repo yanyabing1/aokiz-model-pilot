@@ -33,7 +33,7 @@ The application manages a configuration file located at `~/.claude/claude-config
 {
   "model": "claude-3-sonnet-20240229",
   "temperature": 0.7,
-  "max_tokens": 40960,
+  "max_tokens": 10000000,
   "top_p": 1,
   "system_prompt": "",
   "auto_save": true,

@@ -39,7 +39,7 @@ export default function ClaudeConfigurationManager() {
   const [config, setConfig] = useState<ClaudeConfig>({
     model: 'glm-4.5',
     temperature: 0.7,
-    max_tokens: 40960,
+    max_tokens: 10000000,
     top_p: 0.9,
     system_prompt: `你是一个有帮助、尊重和诚实的助手。始终尽可能有帮助地回答，同时保持安全。你的回答不应包含任何有害、不道德、种族主义、性别歧视、有毒、危险或非法的内容。请确保你的回答在社会上是无偏见的，并且是积极的。
 如果一个问题的含义不清楚或事实上不连贯，请解释为什么而不是回答不正确的内容。如果你不知道问题的答案，请不要分享虚假信息。`,
@@ -160,7 +160,7 @@ export default function ClaudeConfigurationManager() {
         // 创建Legacy格式用于显示
         const legacyConfig: LegacyClaudeConfig = {
           model: claudeCodeSettings.env?.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
-          max_tokens: claudeCodeSettings.claude_settings?.max_tokens || 40960,
+          max_tokens: claudeCodeSettings.claude_settings?.max_tokens || 10000000,
           temperature: claudeCodeSettings.claude_settings?.temperature || 0.7,
           top_p: claudeCodeSettings.claude_settings?.top_p || 0.9,
           system_prompt: claudeCodeSettings.claude_settings?.system_prompt || '',
@@ -202,7 +202,7 @@ export default function ClaudeConfigurationManager() {
           ANTHROPIC_MODEL: config.model || 'claude-3-5-sonnet-20241022',
         },
         claude_settings: {
-          max_tokens: config.max_tokens || 40960,
+          max_tokens: config.max_tokens || 10000000,
           temperature: config.temperature || 0.7,
           top_p: config.top_p || 0.9,
           system_prompt:
@@ -683,9 +683,9 @@ export default function ClaudeConfigurationManager() {
                   <div className="relative">
                     <input
                       type="number"
-                      value={config.max_tokens || 40960}
+                      value={config.max_tokens || 10000000}
                       min="1"
-                      max="40960"
+                      max="10000000"
                       onChange={e => handleConfigChange('max_tokens', parseInt(e.target.value))}
                       className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                     />

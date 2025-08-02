@@ -335,6 +335,23 @@ export class ConfigManager {
         autoUpdates: true,
         verbose: false,
       },
+      
+      // API Configuration
+      api_config: {
+        base_url: 'https://open.bigmodel.cn/api/anthropic',
+        auth_token: '',
+        api_key: '',
+        timeout: 30000,
+        max_retries: 3,
+        streaming: true,
+        rate_limit: {
+          requests_per_minute: 60,
+          tokens_per_minute: 90000,
+        },
+        preset: 'bigmodel',
+        connection_status: 'disconnected',
+        last_tested: '',
+      },
     };
   }
 }
