@@ -18,8 +18,8 @@ export async function GET() {
         BASH_DEFAULT_TIMEOUT_MS: '60000',
         BASH_MAX_TIMEOUT_MS: '300000',
         BASH_MAX_OUTPUT_LENGTH: '300000',
-        CLAUDE_CODE_MAX_OUTPUT_TOKENS: '1000000',
-        MAX_THINKING_TOKENS: '1000',
+        CLAUDE_CODE_MAX_OUTPUT_TOKENS: '8192',
+        MAX_THINKING_TOKENS: '8192',
         MAX_MCP_OUTPUT_TOKENS: '1000000',
         MCP_TIMEOUT: '30000',
         MCP_TOOL_TIMEOUT: '60000',
@@ -107,6 +107,16 @@ export async function POST(request: NextRequest) {
       // File doesn't exist, start with empty config
     }
 
+    // Auto-correct CLAUDE_CODE_MAX_OUTPUT_TOKENS if it exceeds 8192
+    const MAX_TOKENS_LIMIT = 8192;
+    if (config.env?.CLAUDE_CODE_MAX_OUTPUT_TOKENS) {
+      const tokensValue = parseInt(config.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS);
+      if (tokensValue > MAX_TOKENS_LIMIT) {
+        console.log(`Auto-correcting CLAUDE_CODE_MAX_OUTPUT_TOKENS from ${tokensValue} to ${MAX_TOKENS_LIMIT}`);
+        config.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS = String(MAX_TOKENS_LIMIT);
+      }
+    }
+
     // Check if the incoming config is in Claude Code format
     if (config.$schema || config.env || config.permissions) {
       // Direct Claude Code format - merge it properly
@@ -150,6 +160,15 @@ export async function POST(request: NextRequest) {
       await fs.writeFile(CLAUDE_CONFIG_PATH, JSON.stringify(mergedConfig, null, 2));
     } else {
       // Legacy format - convert to Claude Code format
+      const MAX_TOKENS_LIMIT = 8192;
+      let maxTokensValue = config.max_tokens ? parseInt(config.max_tokens) : MAX_TOKENS_LIMIT;
+      
+      // Auto-correct max_tokens if it exceeds limit
+      if (maxTokensValue > MAX_TOKENS_LIMIT) {
+        console.log(`Auto-correcting max_tokens from ${maxTokensValue} to ${MAX_TOKENS_LIMIT}`);
+        maxTokensValue = MAX_TOKENS_LIMIT;
+      }
+      
       const mergedConfig = {
         ...existingConfig,
         $schema: 'https://json.schemastore.org/claude-code-settings.json',
@@ -159,7 +178,7 @@ export async function POST(request: NextRequest) {
           ANTHROPIC_BASE_URL: config.api_endpoint || config.anthropic_base_url || 'https://api.anthropic.com',
           ANTHROPIC_AUTH_TOKEN: config.anthropic_auth_token,
           BASH_DEFAULT_TIMEOUT_MS: config.timeout ? String(config.timeout) : '60000',
-          CLAUDE_CODE_MAX_OUTPUT_TOKENS: config.max_tokens ? String(config.max_tokens) : '1000000',
+          CLAUDE_CODE_MAX_OUTPUT_TOKENS: String(maxTokensValue),
         },
         model: config.model || 'claude-3-5-sonnet-20241022',
         permissions: existingConfig.permissions || {
