@@ -22,7 +22,7 @@ export default function ConfigPanel() {
       } else {
         setStatus('Failed to load configuration');
       }
-    } catch (error) {
+    } catch (_error) {
       setStatus('Failed to load configuration');
     } finally {
       setLoading(false);
@@ -46,7 +46,7 @@ export default function ConfigPanel() {
       } else {
         setStatus('Failed to save configuration');
       }
-    } catch (error) {
+    } catch (_error) {
       setStatus('Error saving configuration');
     } finally {
       setSaving(false);

@@ -14,7 +14,7 @@ export default function AdvancedClaudeConfiguration() {
   const [config, setConfig] = useState<ClaudeConfig>({
     model: 'claude-3-5-sonnet-20241022',
     temperature: 0.7,
-    max_tokens: 4096,
+    max_tokens: 1000000,
     top_p: 1,
     system_prompt: `你是一个有帮助、尊重和诚实的助手。始终尽可能有帮助地回答，同时保持安全。你的回答不应包含任何有害、不道德、种族主义、性别歧视、有毒、危险或非法的内容。请确保你的回答在社会上是无偏见的，并且是积极的。
 如果一个问题的含义不清楚或事实上不连贯，请解释为什么而不是回答不正确的内容。如果你不知道问题的答案，请不要分享虚假信息。`,
@@ -126,7 +126,7 @@ export default function AdvancedClaudeConfiguration() {
         const legacyConfig: ClaudeConfig = {
           model: claudeCodeSettings.env?.ANTHROPIC_MODEL || claudeCodeSettings.model || 'claude-3-5-sonnet-20241022',
           temperature: claudeCodeSettings.temperature || 0.7,
-          max_tokens: claudeCodeSettings.max_tokens || 4096,
+          max_tokens: claudeCodeSettings.max_tokens || 1000000,
           top_p: claudeCodeSettings.top_p || 1,
           system_prompt: claudeCodeSettings.system_prompt || '',
           anthropic_base_url: claudeCodeSettings.env?.ANTHROPIC_BASE_URL || 'https://api.anthropic.com',
@@ -164,10 +164,10 @@ export default function AdvancedClaudeConfiguration() {
           ANTHROPIC_AUTH_TOKEN: config.anthropic_auth_token || '',
           ANTHROPIC_API_KEY: config.anthropic_auth_token || '',
           BASH_DEFAULT_TIMEOUT_MS: String(config.timeout || 30000),
-          CLAUDE_CODE_MAX_OUTPUT_TOKENS: String(config.max_tokens || 4096),
+          CLAUDE_CODE_MAX_OUTPUT_TOKENS: String(config.max_tokens || 1000000),
         },
         model: config.model || 'claude-3-5-sonnet-20241022',
-        max_tokens: config.max_tokens || 4096,
+        max_tokens: config.max_tokens || 1000000,
         temperature: config.temperature || 0.7,
         top_p: config.top_p || 1,
         system_prompt: config.system_prompt || 'You are Claude, an AI assistant created by Anthropic.',

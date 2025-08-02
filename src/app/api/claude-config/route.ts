@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
-import path from 'path';
+import { NextRequest, NextResponse } from 'next/server';
 import os from 'os';
+import path from 'path';
 
 const CLAUDE_CONFIG_PATH = path.join(os.homedir(), '.claude', 'settings.json');
 
@@ -17,8 +17,10 @@ export async function GET() {
         ANTHROPIC_BASE_URL: 'https://api.anthropic.com',
         BASH_DEFAULT_TIMEOUT_MS: '60000',
         BASH_MAX_TIMEOUT_MS: '300000',
-        CLAUDE_CODE_MAX_OUTPUT_TOKENS: '4096',
+        BASH_MAX_OUTPUT_LENGTH: '300000',
+        CLAUDE_CODE_MAX_OUTPUT_TOKENS: '1000000',
         MAX_THINKING_TOKENS: '1000',
+        MAX_MCP_OUTPUT_TOKENS: '1000000',
         MCP_TIMEOUT: '30000',
         MCP_TOOL_TIMEOUT: '60000',
       },
@@ -158,7 +160,7 @@ export async function POST(request: NextRequest) {
           ANTHROPIC_AUTH_TOKEN: config.anthropic_auth_token,
           ANTHROPIC_API_KEY: config.anthropic_auth_token,
           BASH_DEFAULT_TIMEOUT_MS: config.timeout ? String(config.timeout) : '60000',
-          CLAUDE_CODE_MAX_OUTPUT_TOKENS: config.max_tokens ? String(config.max_tokens) : '4096',
+          CLAUDE_CODE_MAX_OUTPUT_TOKENS: config.max_tokens ? String(config.max_tokens) : '1000000',
         },
         model: config.model || 'claude-3-5-sonnet-20241022',
         permissions: existingConfig.permissions || {

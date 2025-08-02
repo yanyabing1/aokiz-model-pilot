@@ -18,7 +18,7 @@ export default function ClaudeConfigurationManager() {
   const [config, setConfig] = useState<ClaudeConfig>({
     model: 'glm-4.5',
     temperature: 0.7,
-    max_tokens: 10000000,
+    max_tokens: 1000000,
     top_p: 0.9,
     system_prompt: `你是一个有帮助、尊重和诚实的助手。始终尽可能有帮助地回答，同时保持安全。你的回答不应包含任何有害、不道德、种族主义、性别歧视、有毒、危险或非法的内容。请确保你的回答在社会上是无偏见的，并且是积极的。
 如果一个问题的含义不清楚或事实上不连贯，请解释为什么而不是回答不正确的内容。如果你不知道问题的答案，请不要分享虚假信息。`,
@@ -45,8 +45,10 @@ export default function ClaudeConfigurationManager() {
       ANTHROPIC_AUTH_TOKEN: '',
       BASH_DEFAULT_TIMEOUT_MS: '60000',
       BASH_MAX_TIMEOUT_MS: '300000',
-      CLAUDE_CODE_MAX_OUTPUT_TOKENS: '4096',
+      BASH_MAX_OUTPUT_LENGTH: '300000',
+      CLAUDE_CODE_MAX_OUTPUT_TOKENS: '1000000',
       MAX_THINKING_TOKENS: '1000',
+      MAX_MCP_OUTPUT_TOKENS: '1000000',
       MCP_TIMEOUT: '30000',
       MCP_TOOL_TIMEOUT: '60000',
       DISABLE_TELEMETRY: '0',
@@ -191,7 +193,7 @@ export default function ClaudeConfigurationManager() {
         // 创建Legacy格式用于显示 - 从解构后的字段读取
         const legacyConfig: LegacyClaudeConfig = {
           model: claudeCodeSettings.env?.ANTHROPIC_MODEL || claudeCodeSettings.model || 'claude-3-5-sonnet-20241022',
-          max_tokens: claudeCodeSettings.max_tokens || 4096,
+          max_tokens: claudeCodeSettings.max_tokens || 1000000,
           temperature: claudeCodeSettings.temperature || 0.7,
           top_p: claudeCodeSettings.top_p || 1,
           system_prompt: claudeCodeSettings.system_prompt || '',
@@ -237,11 +239,11 @@ export default function ClaudeConfigurationManager() {
           ANTHROPIC_MODEL: config.env?.ANTHROPIC_MODEL || config.model || 'claude-3-5-sonnet-20241022',
           ANTHROPIC_API_KEY: config.env?.ANTHROPIC_API_KEY || config.anthropic_auth_token || '',
           BASH_DEFAULT_TIMEOUT_MS: config.env?.BASH_DEFAULT_TIMEOUT_MS || String(config.timeout || 30000),
-          CLAUDE_CODE_MAX_OUTPUT_TOKENS: config.env?.CLAUDE_CODE_MAX_OUTPUT_TOKENS || String(config.max_tokens || 4096),
+          CLAUDE_CODE_MAX_OUTPUT_TOKENS: config.env?.CLAUDE_CODE_MAX_OUTPUT_TOKENS || String(config.max_tokens || 1000000),
         },
         model: config.model || 'claude-3-5-sonnet-20241022',
         // 保留顶层的兼容性字段
-        max_tokens: config.max_tokens || 4096,
+        max_tokens: config.max_tokens || 1000000,
         temperature: config.temperature || 0.7,
         top_p: config.top_p || 1,
         system_prompt: config.system_prompt || 'You are Claude, an AI assistant created by Anthropic.',
@@ -917,34 +919,32 @@ export default function ClaudeConfigurationManager() {
                   </div>
                 </div>
 
-                {/* Quick Setup Button */}
-                <div className="flex justify-end mt-4">
-                  <Tooltip title="自动填入推荐的API配置值">
-                    <button
-                      onClick={() => {
-                        handleConfigChange(
-                          'anthropic_base_url',
-                          'https://open.bigmodel.cn/api/anthropic'
-                        )
-                        handleConfigChange(
-                          'anthropic_auth_token',
-                          '45150a6b55f24386b4e00ca3d60a1264.LBYrMMJ292Jz5O08'
-                        )
-                        message.success('已设置推荐配置')
-                        notification.info({
-                          message: '快速配置完成',
-                          description:
-                            '已设置推荐的配置值，请点击"保存配置"按钮保存到Claude配置文件。',
-                          duration: 4,
-                        })
-                      }}
-                      className="px-4 py-2 bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-400 border border-green-500/30 rounded-lg hover:from-green-500/30 hover:to-green-600/30 transition-all duration-300 text-sm flex items-center"
-                    >
-                      <i className="fas fa-magic mr-2"></i>
-                      快速配置推荐值
-                    </button>
-                  </Tooltip>
-                </div>
+                {/* Quick Setup Button - Only show if no token is configured */}
+                {!config.anthropic_auth_token && (
+                  <div className="flex justify-end mt-4">
+                    <Tooltip title="自动填入推荐的API配置值（需要配置有效的认证令牌）">
+                      <button
+                        onClick={() => {
+                          handleConfigChange(
+                            'anthropic_base_url',
+                            'https://open.bigmodel.cn/api/anthropic'
+                          )
+                          message.success('已设置推荐的基础URL配置')
+                          notification.info({
+                            message: '快速配置完成',
+                            description:
+                              '已设置推荐的基础URL，请手动输入有效的认证令牌并点击"保存配置"按钮。',
+                            duration: 4,
+                          })
+                        }}
+                        className="px-4 py-2 bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-400 border border-green-500/30 rounded-lg hover:from-green-500/30 hover:to-green-600/30 transition-all duration-300 text-sm flex items-center"
+                      >
+                        <i className="fas fa-magic mr-2"></i>
+                        快速配置推荐值
+                      </button>
+                    </Tooltip>
+                  </div>
+                )}
               </div>
 
               {/* Other API Settings */}

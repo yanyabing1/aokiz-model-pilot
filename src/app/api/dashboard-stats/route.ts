@@ -7,7 +7,7 @@ export async function GET() {
     const configManager = ConfigManager.getInstance();
     const config = await configManager.loadConfig();
     return NextResponse.json(config);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: 'Failed to load configuration' },
       { status: 500 }
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const configManager = ConfigManager.getInstance();
     const updatedConfig = await configManager.updateConfig(config);
     return NextResponse.json(updatedConfig);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: 'Failed to save configuration' },
       { status: 500 }

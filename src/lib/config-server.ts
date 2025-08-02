@@ -1,118 +1,8 @@
 import { promises as fs } from 'fs';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+import { ClaudeCodeSettings } from './config';
 
-// Claude Code settings format (official)
-export interface ClaudeCodeSettings {
-  $schema?: string;
-  
-  // Environment variables
-  env?: {
-    // Authentication
-    ANTHROPIC_API_KEY?: string;
-    ANTHROPIC_BASE_URL?: string;
-    ANTHROPIC_AUTH_TOKEN?: string;
-    ANTHROPIC_CUSTOM_HEADERS?: string;
-    AWS_BEARER_TOKEN_BEDROCK?: string;
-    ANTHROPIC_BEDROCK_BASE_URL?: string;
-    ANTHROPIC_VERTEX_BASE_URL?: string;
-    ANTHROPIC_VERTEX_PROJECT_ID?: string;
-    
-    // Model configuration
-    ANTHROPIC_MODEL?: string;
-    ANTHROPIC_SMALL_FAST_MODEL?: string;
-    ANTHROPIC_SMALL_FAST_MODEL_AWS_REGION?: string;
-    
-    // Cloud service configuration
-    CLAUDE_CODE_USE_BEDROCK?: string;
-    CLAUDE_CODE_USE_VERTEX?: string;
-    CLAUDE_CODE_SKIP_BEDROCK_AUTH?: string;
-    CLAUDE_CODE_SKIP_VERTEX_AUTH?: string;
-    CLOUD_ML_REGION?: string;
-    
-    // Bash configuration
-    BASH_DEFAULT_TIMEOUT_MS?: string;
-    BASH_MAX_TIMEOUT_MS?: string;
-    BASH_MAX_OUTPUT_LENGTH?: string;
-    CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR?: string;
-    
-    // Output and token limits
-    CLAUDE_CODE_MAX_OUTPUT_TOKENS?: string;
-    MAX_THINKING_TOKENS?: string;
-    MAX_MCP_OUTPUT_TOKENS?: string;
-    
-    // MCP configuration
-    MCP_TIMEOUT?: string;
-    MCP_TOOL_TIMEOUT?: string;
-    
-    // Debug and logging
-    CLAUDE_CODE_API_KEY_HELPER_TTL_MS?: string;
-    CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL?: string;
-    CLAUDE_CODE_DISABLE_TERMINAL_TITLE?: string;
-    
-    // Disable options
-    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC?: string;
-    DISABLE_AUTOUPDATER?: string;
-    DISABLE_BUG_COMMAND?: string;
-    DISABLE_COST_WARNINGS?: string;
-    DISABLE_ERROR_REPORTING?: string;
-    DISABLE_NON_ESSENTIAL_MODEL_CALLS?: string;
-    DISABLE_TELEMETRY?: string;
-    
-    // Network proxy
-    HTTP_PROXY?: string;
-    HTTPS_PROXY?: string;
-  };
-  
-  // Tool permissions
-  permissions?: {
-    allow?: string[];
-    deny?: string[];
-    additionalDirectories?: string[];
-    defaultMode?: string;
-    disableBypassPermissionsMode?: string;
-  };
-  
-  // Hooks
-  hooks?: {
-    PreToolUse?: Record<string, string>;
-    PostToolUse?: Record<string, string>;
-    Notification?: string;
-    Stop?: string;
-  };
-  
-  // Model settings
-  model?: string;
-  
-  // Authentication
-  apiKeyHelper?: string;
-  awsAuthRefresh?: string;
-  awsCredentialExport?: string;
-  forceLoginMethod?: 'claudeai' | 'console';
-  
-  // Configuration management
-  cleanupPeriodDays?: number;
-  includeCoAuthoredBy?: boolean;
-  
-  // MCP servers
-  enableAllProjectMcpServers?: boolean;
-  enabledMcpjsonServers?: string[];
-  disabledMcpjsonServers?: string[];
-  
-  // Legacy compatibility - these will be flattened from claude_settings
-  max_tokens?: number;
-  temperature?: number;
-  top_p?: number;
-  system_prompt?: string;
-  
-  // Additional UI-specific settings
-  ui_settings?: {
-    theme?: 'light' | 'dark' | 'system';
-    preferredNotifChannel?: 'iterm2' | 'iterm2_with_bell' | 'terminal_bell' | 'notifications_disabled';
-    autoUpdates?: boolean;
-    verbose?: boolean;
-  };
-}
 
 // Legacy configuration interface for compatibility
 export interface LegacyClaudeConfig {
@@ -164,7 +54,7 @@ export class ConfigManager {
       await fs.access(CONFIG_PATH);
       const configData = await fs.readFile(CONFIG_PATH, 'utf-8');
       this.config = JSON.parse(configData);
-    } catch (error) {
+    } catch (_error) {
       this.config = this.getDefaultConfig();
       await this.saveConfig();
     }
@@ -175,9 +65,9 @@ export class ConfigManager {
     try {
       await fs.mkdir(CONFIG_DIR, { recursive: true });
       await fs.writeFile(CONFIG_PATH, JSON.stringify(this.config, null, 2));
-    } catch (error) {
-      console.error('Failed to save config:', error);
-      throw error;
+    } catch (_error) {
+      console.error('Failed to save config:', _error);
+      throw _error;
     }
   }
 
@@ -296,8 +186,10 @@ export class ConfigManager {
         ANTHROPIC_BASE_URL: 'https://api.anthropic.com',
         BASH_DEFAULT_TIMEOUT_MS: '60000',
         BASH_MAX_TIMEOUT_MS: '300000',
-        CLAUDE_CODE_MAX_OUTPUT_TOKENS: '4096',
+        BASH_MAX_OUTPUT_LENGTH: '300000',
+        CLAUDE_CODE_MAX_OUTPUT_TOKENS: '1000000',
         MAX_THINKING_TOKENS: '1000',
+        MAX_MCP_OUTPUT_TOKENS: '1000000',
         MCP_TIMEOUT: '30000',
         MCP_TOOL_TIMEOUT: '60000',
       },
@@ -325,7 +217,7 @@ export class ConfigManager {
       enableAllProjectMcpServers: false,
       enabledMcpjsonServers: ['memory', 'github'],
       disabledMcpjsonServers: [],
-      max_tokens: 4096,
+      max_tokens: 1000000,
       temperature: 0.7,
       top_p: 1,
       system_prompt: 'You are Claude, an AI assistant created by Anthropic.',
