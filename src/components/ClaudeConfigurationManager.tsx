@@ -1560,8 +1560,8 @@ Model: ${config.model}`
                       <select
                         value={tool}
                         onChange={(e) => {
-                          const newHooks = { ...(config.hooks?.PreToolUse || {}) };
-                          delete newHooks[tool];
+                          const newHooks = { ...(config.hooks?.PreToolUse || {}) as Record<string, any> };
+                          delete newHooks[tool as string];
                           newHooks[e.target.value] = command;
                           handleConfigChange('hooks.PreToolUse', newHooks);
                         }}
@@ -1576,10 +1576,10 @@ Model: ${config.model}`
                       </select>
                       <input
                         type="text"
-                        value={command}
+                        value={typeof command === 'object' ? JSON.stringify(command) : command}
                         onChange={(e) => {
-                          const newHooks = { ...(config.hooks?.PreToolUse || {}) };
-                          newHooks[tool] = e.target.value;
+                          const newHooks = { ...(config.hooks?.PreToolUse || {}) as Record<string, any> };
+                          newHooks[tool as string] = e.target.value;
                           handleConfigChange('hooks.PreToolUse', newHooks);
                         }}
                         className="flex-1 bg-dark/50 border border-primary/40 rounded-lg py-2 px-4 text-light"
@@ -1587,8 +1587,8 @@ Model: ${config.model}`
                       />
                       <button
                         onClick={() => {
-                          const newHooks = { ...(config.hooks?.PreToolUse || {}) };
-                          delete newHooks[tool];
+                          const newHooks = { ...(config.hooks?.PreToolUse || {}) as Record<string, any> };
+                          delete newHooks[tool as string];
                           handleConfigChange('hooks.PreToolUse', newHooks);
                         }}
                         className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
@@ -1599,7 +1599,7 @@ Model: ${config.model}`
                   ))}
                   <button
                     onClick={() => {
-                      const newHooks = { ...(config.hooks?.PreToolUse || {}) };
+                      const newHooks = { ...(config.hooks?.PreToolUse || {}) as Record<string, any> };
                       newHooks['Bash'] = '';
                       handleConfigChange('hooks.PreToolUse', newHooks);
                     }}
@@ -1620,8 +1620,8 @@ Model: ${config.model}`
                       <select
                         value={tool}
                         onChange={(e) => {
-                          const newHooks = { ...(config.hooks?.PostToolUse || {}) };
-                          delete newHooks[tool];
+                          const newHooks = { ...(config.hooks?.PostToolUse || {}) as Record<string, any> };
+                          delete newHooks[tool as string];
                           newHooks[e.target.value] = command;
                           handleConfigChange('hooks.PostToolUse', newHooks);
                         }}
@@ -1636,10 +1636,10 @@ Model: ${config.model}`
                       </select>
                       <input
                         type="text"
-                        value={command}
+                        value={typeof command === 'object' ? JSON.stringify(command) : command}
                         onChange={(e) => {
-                          const newHooks = { ...(config.hooks?.PostToolUse || {}) };
-                          newHooks[tool] = e.target.value;
+                          const newHooks = { ...(config.hooks?.PostToolUse || {}) as Record<string, any> };
+                          newHooks[tool as string] = e.target.value;
                           handleConfigChange('hooks.PostToolUse', newHooks);
                         }}
                         className="flex-1 bg-dark/50 border border-primary/40 rounded-lg py-2 px-4 text-light"
@@ -1647,8 +1647,8 @@ Model: ${config.model}`
                       />
                       <button
                         onClick={() => {
-                          const newHooks = { ...(config.hooks?.PostToolUse || {}) };
-                          delete newHooks[tool];
+                          const newHooks = { ...(config.hooks?.PostToolUse || {}) as Record<string, any> };
+                          delete newHooks[tool as string];
                           handleConfigChange('hooks.PostToolUse', newHooks);
                         }}
                         className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
@@ -1659,7 +1659,7 @@ Model: ${config.model}`
                   ))}
                   <button
                     onClick={() => {
-                      const newHooks = { ...(config.hooks?.PostToolUse || {}) };
+                      const newHooks = { ...(config.hooks?.PostToolUse || {}) as Record<string, any> };
                       newHooks['Bash'] = '';
                       handleConfigChange('hooks.PostToolUse', newHooks);
                     }}
@@ -1679,7 +1679,7 @@ Model: ${config.model}`
                     <label className="block text-sm font-medium text-gray-300 mb-2">通知钩子</label>
                     <input
                       type="text"
-                      value={config.hooks?.Notification || ''}
+                      value={typeof config.hooks?.Notification === 'object' ? JSON.stringify(config.hooks?.Notification) : config.hooks?.Notification || ''}
                       onChange={(e) => handleConfigChange('hooks.Notification', e.target.value)}
                       className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
                       placeholder="通知时执行的命令"
@@ -1689,7 +1689,7 @@ Model: ${config.model}`
                     <label className="block text-sm font-medium text-gray-300 mb-2">停止钩子</label>
                     <input
                       type="text"
-                      value={config.hooks?.Stop || ''}
+                      value={typeof config.hooks?.Stop === 'object' ? JSON.stringify(config.hooks?.Stop) : config.hooks?.Stop || ''}
                       onChange={(e) => handleConfigChange('hooks.Stop', e.target.value)}
                       className="w-full bg-dark/50 border border-primary/40 rounded-lg py-3 px-4 text-light"
                       placeholder="停止时执行的命令"
