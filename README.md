@@ -1,6 +1,6 @@
 # Aokiz Model Pilot
 
-Aokiz Model Pilot 是一个专为 Claude Code 设计的配置管理平台，旨在简化和标准化 Claude AI 的配置流程。该平台提供了直观的 Web 界面，让用户能够轻松管理 Claude Code 的各种设置，包括模型参数、权限控制、第三方服务集成等。
+Aokiz Model Pilot 是一个功能强大的 Claude Code 配置管理平台，专为简化 Claude AI 工具的配置流程而设计。通过直观的 Web 界面，用户可以轻松管理 Claude Code 的所有核心设置，包括模型参数、权限控制、第三方服务集成等，让 AI 辅助开发变得更加高效和安全。
 
 ## 项目概述
 
@@ -20,7 +20,7 @@ Aokiz Model Pilot 是一个专为 Claude Code 设计的配置管理平台，旨�
 
 ## 功能特性
 
-### 核心功能
+### 🎯 核心功能
 - **Claude AI 配置管理**: 全局配置 Claude AI 模型参数，包括模型选择、温度、最大令牌数等
 - **第三方服务集成**: 支持与多种第三方服务的 API 集成
 - **实时配置更新**: 所有配置更改实时保存到 `~/.claude/settings.json`
@@ -28,27 +28,128 @@ Aokiz Model Pilot 是一个专为 Claude Code 设计的配置管理平台，旨�
 - **权限管理**: 精细控制 Claude Code 的工具使用权限
 - **环境变量配置**: 管理各种环境变量和 API 端点设置
 
-### 技术特性
+### 🛠️ 技术特性
 - **现代化 UI**: 基于 Next.js 14 和 Ant Design 构建的响应式界面
 - **TypeScript 支持**: 完整的 TypeScript 类型安全
 - **实时同步**: 配置更改即时同步到本地文件系统
 - **数据可视化**: 使用 ECharts 提供配置统计图表
 - **安全控制**: 内置安全权限管理，防止危险操作
 
-## 快速开始
+## Claude Code 安装教程
 
-### 安装依赖
+### 前置要求
+
+在开始之前，请确保您的系统满足以下要求：
+
+- **Node.js**: 版本 18.0 或更高
+- **npm**: 版本 8.0 或更高
+- **操作系统**: macOS、Linux 或 Windows (WSL2)
+- **Anthropic API 密钥**: 从 [Anthropic Console](https://console.anthropic.com) 获取
+
+### 安装 Claude Code
+
+#### 方法一：通过 npm 安装（推荐）
+
+```bash
+# 全局安装 Claude Code
+npm install -g @anthropic-ai/claude-code
+
+# 验证安装
+claude-code --version
+```
+
+#### 方法二：通过 curl 安装
+
+```bash
+# 下载安装脚本
+curl -fsSL https://claude.ai/install | sh
+
+# 添加到 PATH（如果需要）
+export PATH="$PATH:$HOME/.local/bin"
+```
+
+#### 方法三：通过 Homebrew 安装（macOS）
+
+```bash
+# 安装 Claude Code
+brew install anthropic/tap/claude-code
+
+# 验证安装
+claude-code --version
+```
+
+### 配置 Claude Code
+
+#### 1. 设置 API 密钥
+
+```bash
+# 设置 Anthropic API 密钥
+export ANTHROPIC_API_KEY="your-api-key-here"
+
+# 或者使用 claude-code 命令配置
+claude-code auth login
+```
+
+#### 2. 初始化配置
+
+```bash
+# 创建默认配置文件
+claude-code init
+
+# 这将在 ~/.claude/settings.json 创建配置文件
+```
+
+#### 3. 验证配置
+
+```bash
+# 测试 Claude Code 是否正常工作
+claude-code --help
+
+# 检查当前配置
+claude-code config show
+```
+
+### 快速开始
+
+#### 安装项目依赖
 ```bash
 npm install
 ```
 
-### 启动开发服务器
+#### 启动开发服务器
 ```bash
 npm run dev
 ```
 
-### 访问应用
+#### 访问应用
 在浏览器中打开 [http://localhost:3000](http://localhost:3000)
+
+### 常见问题解决
+
+#### 1. 权限问题
+```bash
+# 如果遇到权限问题，可以尝试
+sudo chown -R $(whoami) ~/.claude
+```
+
+#### 2. 网络问题
+```bash
+# 如果网络连接有问题，可以设置代理
+export HTTP_PROXY="http://proxy.company.com:8080"
+export HTTPS_PROXY="http://proxy.company.com:8080"
+```
+
+#### 3. 卸载 Claude Code
+```bash
+# 通过 npm 卸载
+npm uninstall -g @anthropic-ai/claude-code
+
+# 通过 Homebrew 卸载
+brew uninstall claude-code
+
+# 清理配置文件
+rm -rf ~/.claude
+```
 
 ## 配置文件
 
@@ -105,7 +206,7 @@ npm run dev
 }
 ```
 
-## API 接口
+## 🔌 API 接口
 
 - `GET /api/config` - 获取当前配置
 - `POST /api/config` - 更新配置
@@ -113,7 +214,7 @@ npm run dev
 - `POST /api/claude-config` - 更新 Claude Code 配置
 - `GET /api/dashboard-stats` - 获取仪表板统计数据
 
-## Claude Code 第三方接入教程
+## 🔗 Claude Code 第三方接入教程
 
 ### 基本配置
 
@@ -244,7 +345,7 @@ export CLAUDE_CODE_DEBUG=1
 npm run dev
 ```
 
-## 开发脚本
+## 🚀 开发脚本
 
 - `npm run dev` - 启动开发服务器
 - `npm run build` - 构建生产版本
@@ -254,7 +355,7 @@ npm run dev
 - `npm run format` - 使用 Prettier 格式化代码
 - `npm run dev:full` - 启动开发服务器并运行类型检查
 
-## 技术栈
+## 🛠️ 技术栈
 
 - **前端框架**: Next.js 14
 - **UI 组件**: Ant Design

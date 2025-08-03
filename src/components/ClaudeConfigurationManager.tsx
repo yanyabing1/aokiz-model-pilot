@@ -5,6 +5,8 @@ import { Modal, Tooltip, message, notification } from 'antd'
 import { useEffect, useState } from 'react'
 import ClaudeConfigurationFooter from './ClaudeConfigurationFooter'
 import ClaudeConfigurationHeader from './ClaudeConfigurationHeader'
+import ClaudeCodeInstaller from './ClaudeCodeInstaller'
+import ClaudeInstallModal from './ClaudeInstallModal'
 
 interface LegacyClaudeConfig {
   model: string
@@ -170,14 +172,37 @@ export default function ClaudeConfigurationManager() {
   const [isLoading, setIsLoading] = useState(true)
   const [currentClaudeConfig, setCurrentClaudeConfig] = useState<LegacyClaudeConfig | null>(null)
   const [configStatus, setConfigStatus] = useState<'loading' | 'loaded' | 'error'>('loading')
-  const [activeTab, setActiveTab] = useState('basic')
+  const [activeTab, setActiveTab] = useState('installer')
   const [showAuthToken, setShowAuthToken] = useState(false)
   const [configPreview, setConfigPreview] = useState<any>(null)
   const [showConfigPreview, setShowConfigPreview] = useState(false)
+  
+  // Claude Code 安装状态
+  const [claudeCodeInstallStatus, setClaudeCodeInstallStatus] = useState<any>(null)
+  const [showInstallModal, setShowInstallModal] = useState(false)
 
   useEffect(() => {
     loadClaudeConfig()
+    checkClaudeCodeInstallStatus()
   }, [])
+
+  const checkClaudeCodeInstallStatus = async () => {
+    try {
+      const response = await fetch('/api/claude-install')
+      const data = await response.json()
+      setClaudeCodeInstallStatus(data)
+      
+      // 如果未安装，显示安装引导弹窗
+      if (!data.installed) {
+        setTimeout(() => {
+          setShowInstallModal(true)
+        }, 1000) // 延迟1秒显示，确保页面已加载
+      }
+    } catch (error) {
+      console.error('Failed to check Claude Code install status:', error)
+      setClaudeCodeInstallStatus({ installed: false, error: 'Failed to check installation status' })
+    }
+  }
 
   const loadClaudeConfig = async () => {
     try {
@@ -428,6 +453,7 @@ export default function ClaudeConfigurationManager() {
 
 
   const tabs = [
+    { id: 'installer', label: '安装管理', icon: 'fas fa-download' },
     { id: 'basic', label: '基础设置', icon: 'fas fa-cog' },
     { id: 'permissions', label: '权限配置', icon: 'fas fa-shield-alt' },
     { id: 'environment', label: '环境变量', icon: 'fas fa-terminal' },
@@ -701,6 +727,13 @@ export default function ClaudeConfigurationManager() {
             </div>
           )}
         </div>
+
+        {/* Installer Tab */}
+        {activeTab === 'installer' && (
+          <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
+            <ClaudeCodeInstaller />
+          </div>
+        )}
 
         {/* Basic Settings */}
         {activeTab === 'basic' && (
@@ -2195,6 +2228,20 @@ Model: ${config.model}`
 
       {/* Footer */}
       <ClaudeConfigurationFooter onSave={saveClaudeConfig} isLoading={isLoading} />
+      
+      {/* Claude Code 安装引导弹窗 */}
+      {showInstallModal && (
+        <ClaudeInstallModal
+          visible={showInstallModal}
+          onClose={() => setShowInstallModal(false)}
+          onInstallSuccess={() => {
+            setShowInstallModal(false)
+            // 重新检查安装状态
+            checkClaudeCodeInstallStatus()
+          }}
+          installStatus={claudeCodeInstallStatus}
+        />
+      )}
     </div>
   )
 }
