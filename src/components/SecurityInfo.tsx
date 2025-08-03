@@ -17,8 +17,8 @@ interface SecurityInfoProps {
   onSecurityConfirmed?: () => void
 }
 
-export default function SecurityInfo({ onSecurityConfirmed }: SecurityInfoProps) {
-  const [currentStep, setCurrentStep] = useState(0)
+export default function SecurityInfo({ onSecurityConfirmed: _onSecurityConfirmed }: SecurityInfoProps) {
+  const [currentStep] = useState(0)
 
   const securityPrinciples = [
     {

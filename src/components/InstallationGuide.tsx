@@ -21,7 +21,6 @@ interface InstallationGuideProps {
 
 export default function InstallationGuide({ onInstallationComplete }: InstallationGuideProps) {
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
-  const [currentStep, setCurrentStep] = useState(0)
 
   const installationMethods = [
     {
@@ -63,7 +62,7 @@ export default function InstallationGuide({ onInstallationComplete }: Installati
       setCopiedCommand(type)
       message.success('命令已复制到剪贴板')
       setTimeout(() => setCopiedCommand(null), 2000)
-    } catch (error) {
+    } catch (_error) {
       message.error('复制失败，请手动复制')
     }
   }
@@ -259,7 +258,7 @@ export default function InstallationGuide({ onInstallationComplete }: Installati
 
           <Steps
             direction="vertical"
-            current={currentStep}
+            current={0}
             items={securitySteps.map(step => ({
               title: step.title,
               description: step.description,
