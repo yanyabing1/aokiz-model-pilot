@@ -7,6 +7,8 @@ import ClaudeCodeInstaller from './ClaudeCodeInstaller'
 import ClaudeConfigurationFooter from './ClaudeConfigurationFooter'
 import ClaudeConfigurationHeader from './ClaudeConfigurationHeader'
 import ClaudeInstallModal from './ClaudeInstallModal'
+import InstallationGuide from './InstallationGuide'
+import SecurityInfo from './SecurityInfo'
 
 interface LegacyClaudeConfig {
   model: string
@@ -471,7 +473,7 @@ export default function ClaudeConfigurationManager() {
   const tabs = [
     { id: 'installer', label: '安装管理', icon: 'fas fa-download' },
     { id: 'basic', label: '基础设置', icon: 'fas fa-cog' },
-    { id: 'permissions', label: '权限配置', icon: 'fas fa-shield-alt' },
+    { id: 'permissions', label: '权限配置', icon: 'fas fa-lock' },
     { id: 'environment', label: '环境变量', icon: 'fas fa-terminal' },
     { id: 'hooks', label: '钩子配置', icon: 'fas fa-link' },
     { id: 'mcp', label: 'MCP服务器', icon: 'fas fa-server' },
@@ -497,7 +499,7 @@ export default function ClaudeConfigurationManager() {
       <ClaudeConfigurationHeader />
 
       {/* Main Content */}
-      <main className="pt-32 pb-20 px-4 md:px-8 max-w-[1400px] mx-auto overflow-y-auto min-h-[calc(100vh-200px)]">
+      <main className="pt-32 pb-20 px-4 md:px-8 mx-auto overflow-y-auto min-h-[calc(100vh-200px)]">
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* 左侧列 */}
@@ -531,7 +533,7 @@ export default function ClaudeConfigurationManager() {
               {/* Configuration Completeness Check */}
               <div className="my-10 p-4 bg-dark/30 rounded-2xl glass-dark border border-primary/30 shadow-glow ">
                 <div className="flex items-center justify-between mb-3">
-                  <div className='flex gap-2 items-center'>
+                  <div className="flex gap-2 items-center">
                     <h4 className="text-sm font-medium text-gray-300">关键配置检查</h4>
                     {/* Config Status */}
                     <div className="">
@@ -648,8 +650,22 @@ export default function ClaudeConfigurationManager() {
 
               {/* Installer Tab */}
               {activeTab === 'installer' && (
-                <div className="glass-dark rounded-2xl p-6 border border-primary/30 shadow-glow">
+                <div className="glass-dark rounded-2xl border border-primary/30 shadow-glow">
                   <ClaudeCodeInstaller installSuccessTrigger={installSuccessTrigger} />
+                </div>
+              )}
+
+              {/* Installation Guide Tab */}
+              {activeTab === 'guide' && (
+                <div className="glass-dark rounded-2xl border border-primary/30 shadow-glow">
+                  <InstallationGuide onInstallationComplete={() => setActiveTab('installer')} />
+                </div>
+              )}
+
+              {/* Security Info Tab */}
+              {activeTab === 'security' && (
+                <div className="glass-dark rounded-2xl border border-primary/30 shadow-glow">
+                  <SecurityInfo onSecurityConfirmed={() => setActiveTab('installer')} />
                 </div>
               )}
 
@@ -2522,6 +2538,27 @@ export default function ClaudeConfigurationManager() {
                 </div>
               </div>
             </div>
+
+            {/* 安装指南 */}
+            <div className="cursor-pointer glass-dark my-4 rounded-2xl p-6 border border-primary/30 shadow-glow sticky top-8 hover:shadow-glow-lg transition-all duration-300 transform hover:-translate-y-1 "
+              onClick={() => setActiveTab('guide')}
+            >
+              <h4 className="font-medium text-gray-300">
+                <i className="fas fa-book mr-2"></i>
+                安装指南
+              </h4>
+            </div>
+
+            {/* 安全说明 */}
+            <div className="cursor-pointer glass-dark my-4 rounded-2xl p-6 border border-primary/30 shadow-glow sticky top-8 hover:shadow-glow-lg transition-all duration-300 transform hover:-translate-y-1 "
+              onClick={() => setActiveTab('security')}
+            >
+              <h4 className="font-medium text-gray-300">
+                <i className="fas fa-shield-alt mr-2"></i>
+                安全说明
+              </h4>
+            </div>
+
           </div>
         </div>
       </main>
