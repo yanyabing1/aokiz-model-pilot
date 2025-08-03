@@ -49,7 +49,11 @@ interface InstallResult {
   error?: string
 }
 
-export default function ClaudeCodeInstaller() {
+interface ClaudeCodeInstallerProps {
+  installSuccessTrigger?: number
+}
+
+export default function ClaudeCodeInstaller({ installSuccessTrigger = 0 }: ClaudeCodeInstallerProps) {
   const [status, setStatus] = useState<InstallStatus>({ installed: false })
   const [loading, setLoading] = useState(false)
   const [installing, setInstalling] = useState(false)
@@ -58,12 +62,18 @@ export default function ClaudeCodeInstaller() {
   const [installResult, setInstallResult] = useState<InstallResult | null>(null)
 
   // 检查安装状态
-  const checkInstallStatus = async () => {
+  const checkInstallStatus = async (retryCount = 0) => {
     setLoading(true)
     try {
       const response = await fetch('/api/claude-install')
       const data: InstallStatus = await response.json()
       setStatus(data)
+      
+      // 如果安装成功但没有版本信息，重试一次
+      if (data.installed && !data.version && retryCount < 2) {
+        console.log('Installation detected but no version info, retrying...')
+        setTimeout(() => checkInstallStatus(retryCount + 1), 1000)
+      }
     } catch (error) {
       console.error('检查 Claude Code 状态失败:', error)
       setStatus({
@@ -112,9 +122,11 @@ export default function ClaudeCodeInstaller() {
       setInstallResult(result)
 
       if (result.success) {
-        message.success('Claude Code 安装成功！')
-        // 重新检查状态
-        await checkInstallStatus()
+        message.success('Claude Code 安装成功！正在验证安装...')
+        // 延迟后重新检查状态，确保环境变量和路径已更新
+        setTimeout(async () => {
+          await checkInstallStatus()
+        }, 2000) // 2秒延迟
       } else {
         message.error(`安装失败: ${result.error}`)
       }
@@ -136,6 +148,17 @@ export default function ClaudeCodeInstaller() {
   useEffect(() => {
     checkInstallStatus()
   }, [])
+
+  // 监听安装成功触发器
+  useEffect(() => {
+    if (installSuccessTrigger > 0) {
+      console.log('Install success trigger detected, refreshing status...')
+      // 延迟一下确保系统有足够时间更新
+      setTimeout(() => {
+        checkInstallStatus()
+      }, 1000)
+    }
+  }, [installSuccessTrigger])
 
   const getInstallMethodIcon = (method: string) => {
     switch (method) {
@@ -254,7 +277,7 @@ export default function ClaudeCodeInstaller() {
                 <Button
                   type="default"
                   size="large"
-                  onClick={checkInstallStatus}
+                  onClick={() => checkInstallStatus()}
                   loading={loading}
                   className="px-6 py-3 bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-500 border border-blue-400/40 rounded-lg shadow hover:from-blue-500/20 hover:to-blue-600/20 hover:text-blue-600 hover:border-blue-500 transition-all duration-200 flex items-center justify-center font-medium hover:shadow-glow-lg transition-all duration-300 transform hover:-translate-y-1 "
                   style={{
@@ -391,7 +414,17 @@ export default function ClaudeCodeInstaller() {
           {installResult.success ? (
             <Alert
               message="安装成功"
-              description={installResult.message}
+              description={
+                <div>
+                  <p>{installResult.message}</p>
+                  {loading && (
+                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <LoadingOutlined />
+                      <span>正在验证安装状态...</span>
+                    </div>
+                  )}
+                </div>
+              }
               type="success"
               showIcon
               style={{ borderRadius: 8 }}
