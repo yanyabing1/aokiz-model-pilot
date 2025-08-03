@@ -1,17 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Modal, Button, Space, Progress, Alert, Typography, Steps, Tag, Divider, message, Card } from 'antd'
-import { 
-  CheckCircleOutlined, 
-  ExclamationCircleOutlined, 
-  DownloadOutlined,
+import {
   ApiOutlined,
+  CheckCircleOutlined,
+  CloseOutlined,
+  DownloadOutlined,
+  ExclamationCircleOutlined,
   GithubOutlined,
   GlobalOutlined,
-  CloseOutlined,
+  NodeIndexOutlined,
+  SafetyCertificateOutlined,
   SettingOutlined
 } from '@ant-design/icons'
+import { Alert, Button, Card, Col, Divider, List, Modal, Progress, Row, Space, Steps, Tag, Typography, message } from 'antd'
+import { useEffect, useState } from 'react'
 
 const { Title, Text } = Typography
 
@@ -176,8 +178,9 @@ export default function ClaudeInstallModal({
       width={800}
       centered
       closeIcon={<CloseOutlined />}
-      maskClosable={!installing}
       closable={!installing}
+      mask={true}
+      maskClosable={false}
     >
       {/* 当前状态 */}
       <div style={{ marginBottom: 24 }}>
@@ -340,16 +343,66 @@ export default function ClaudeInstallModal({
         </div>
       )}
 
-      {/* 系统要求 */}
+    {/* 系统要求 */}
       <Divider />
-      <div>
-        <Title level={5}>系统要求</Title>
-        <ul style={{ marginBottom: 16 }}>
-          <li>Node.js 18.0 或更高版本</li>
-          <li>npm 8.0 或更高版本</li>
-          <li>Anthropic API 密钥</li>
-          <li>网络连接（用于下载）</li>
-        </ul>
+      <div className="requirements-section" style={{ marginTop: 32 }}>
+        <Title level={4} style={{ marginBottom: 16 }}>
+          系统要求
+        </Title>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={12}>
+            <List
+              size="large"
+              dataSource={[
+                {
+                  icon: <NodeIndexOutlined style={{ color: '#52c41a' }} />,
+                  title: 'Node.js 18.0 或更高版本',
+                  description: '用于运行 Claude Code 的基础环境',
+                },
+                {
+                  icon: <DownloadOutlined style={{ color: '#1890ff' }} />,
+                  title: 'npm 8.0 或更高版本',
+                  description: '包管理器，用于安装和管理依赖',
+                },
+              ]}
+              renderItem={item => (
+                <List.Item>
+                  <List.Item.Meta
+                    avatar={item.icon}
+                    title={<Text strong>{item.title}</Text>}
+                    description={<Text type="secondary">{item.description}</Text>}
+                  />
+                </List.Item>
+              )}
+            />
+          </Col>
+          <Col xs={24} lg={12}>
+            <List
+              size="large"
+              dataSource={[
+                {
+                  icon: <SafetyCertificateOutlined style={{ color: '#722ed1' }} />,
+                  title: 'Anthropic API 密钥',
+                  description: '用于访问 Claude AI 服务的认证凭据',
+                },
+                {
+                  icon: <GlobalOutlined style={{ color: '#13c2c2' }} />,
+                  title: '网络连接',
+                  description: '用于下载安装包和访问 API 服务',
+                },
+              ]}
+              renderItem={item => (
+                <List.Item>
+                  <List.Item.Meta
+                    avatar={item.icon}
+                    title={<Text strong>{item.title}</Text>}
+                    description={<Text type="secondary">{item.description}</Text>}
+                  />
+                </List.Item>
+              )}
+            />
+          </Col>
+        </Row>
       </div>
 
       {/* 底部操作 */}

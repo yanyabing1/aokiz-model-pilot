@@ -32,7 +32,7 @@ export default function ClaudeConfigurationFooter({ onSave, isLoading }: ClaudeC
                   disabled={isLoading}
                   className="px-6 py-4 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-lg shadow-glow hover:shadow-glow-lg transition-all duration-300 transform hover:-translate-y-1 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
-                    fontSize: "24px"
+                    fontSize: "16px"
                   }}
                   onClick={onSave}
                 >
